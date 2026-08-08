@@ -84,6 +84,6 @@ test: $(HOST_TEST) $(PLUGIN_TEST)
 	python3 tests/verification_contract_test.py
 
 clean:
-	rm -rf $(BUILD) plugins release nt_marbles-plugin.zip
+	rm -rf $(BUILD) plugins release $(PACKAGE) $(PACKAGE).sha256
 
 .PHONY: all clean inspect package verify-overlay test
