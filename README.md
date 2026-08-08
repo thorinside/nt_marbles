@@ -71,7 +71,8 @@ commits to or changes the pinned submodule after removal. `make test` also runs
 the real factory across all five documented NT sample rates and representative
 4-, 24-, 64-, and 256-frame blocks. A continuous fractional control scheduler
 also proves the original 6,400 control boundaries per second are independent of
-the host's block partitioning.
+the host's block partitioning. ARM inspection additionally rejects unresolved
+`__aeabi_*` runtime helpers, which the disting NT plug-in loader does not supply.
 
 ## Build automation
 

@@ -73,6 +73,7 @@ assert "make test verify-overlay" in workflow
 assert "make ARM_CXX=arm-none-eabi-g++ package" in workflow
 assert "BUILD_COMMIT.txt" in makefile
 assert "PLUGIN_SHA256.txt" in makefile
+assert "! $(ARM_NM) -u $(TARGET) | grep -E '__aeabi_'" in makefile
 for criterion in range(1, 22):
     assert f"AC-{criterion:03d}" in evidence
 

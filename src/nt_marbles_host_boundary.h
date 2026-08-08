@@ -1,8 +1,6 @@
 #ifndef NT_MARBLES_HOST_BOUNDARY_H_
 #define NT_MARBLES_HOST_BOUNDARY_H_
 
-#include <cstdint>
-
 namespace nt_marbles {
 
 inline float Clamp(float value, float minimum, float maximum) {
@@ -27,7 +25,10 @@ inline int NextControlIntervalFrames(int sampleRate, int* remainder) {
   // Marbles runs its five-frame render block at 32 kHz. Bresenham-style
   // intervals preserve that elapsed cadence exactly on average at NT sample
   // rates where the equivalent frame count is fractional (48 kHz: 7, 8...).
-  const int64_t total = static_cast<int64_t>(sampleRate) * 5 + *remainder;
+  // The documented NT rates need at most 480,000 here, so 32-bit arithmetic
+  // is deliberate. A 64-bit divide adds an unresolved __aeabi_ldivmod helper
+  // that is not part of the disting NT plug-in ABI.
+  const int total = sampleRate * 5 + *remainder;
   int frames = static_cast<int>(total / 32000);
   *remainder = static_cast<int>(total % 32000);
   if (frames < 1) frames = 1;

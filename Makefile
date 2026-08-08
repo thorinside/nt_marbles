@@ -61,6 +61,7 @@ $(BUILD)/upstream/%.o: $(OVERLAY)/%.cc $(OVERLAY)/.prepared
 inspect: $(TARGET)
 	$(ARM_READELF) -h $(TARGET)
 	$(ARM_NM) -g $(TARGET) | grep -E 'pluginEntry$$'
+	! $(ARM_NM) -u $(TARGET) | grep -E '__aeabi_'
 
 package: inspect
 	@mkdir -p release/programs/plug-ins release/licenses
