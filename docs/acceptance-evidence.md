@@ -1,7 +1,7 @@
 # nt_marbles acceptance evidence
 
-This matrix tracks the original approved Spec `fa577bb1-5fbf-49c2-b064-b241fb85a18e`
-and its full AC-001 through AC-021 target. Automated evidence comes from the
+This matrix tracks the original approved specification and its full AC-001
+through AC-021 target. Automated evidence comes from the
 actual plugin factory/callback integration harness, the small host-boundary
 test, supplemental contract checks, ARM inspection, and repository evidence.
 The exact tested commit and object checksum are generated into the release
@@ -61,13 +61,5 @@ acceptance checklist on 2026-08-08.
 - `make inspect`
 - `make package`
 
-## Delivery lifecycle
-
-- Recovery delivery map: `4d3ccc47-a0e1-4c75-9088-c051531fa8bd`
-- Resolved owner ticket: `c4e7a0f5-1614-4ac9-9e29-5b18398a1bfd`
-- Existing review root to resume: `9dfdca44-3366-40dc-b5a6-0afe70a0e309`
-- Existing Portal execution: `f2c7b4f2-5b88-410f-8a59-e8c6628eec09`
-
 Owner acceptance is recorded from an explicit final `pass`, not inferred from
-readiness. The delivery map remains active only until the same original review
-root accepts this committed evidence and the in-place resume ticket is closed.
+readiness.
