@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="768" height="256" viewBox="0 0 768 256">
+  <style>text{font:14px monospace;fill:#9fffff}.tiny{font-size:11px}.frame{fill:#00191c;stroke:#9fffff;stroke-width:2}.line{stroke:#4bcccc}</style>
+  <rect width="768" height="256" fill="#000"/>
+  <g transform="translate(0 0)"><rect class="frame" width="256" height="64"/><text x="5" y="13">T RHYTHM</text><line class="line" x1="4" y1="18" x2="252" y2="18"/><text class="tiny" x="5" y="36">Rate       Bias       Jitter</text><text class="tiny" x="5" y="55">hold: Range  Gate Len  Gate Rand</text></g>
+  <g transform="translate(256 0)"><rect class="frame" width="256" height="64"/><text x="5" y="13">X PITCH</text><line class="line" x1="4" y1="18" x2="252" y2="18"/><text class="tiny" x="5" y="36">Spread     Bias       Steps</text><text class="tiny" x="5" y="55">hold: Y Spread  Y Bias  Y Steps</text></g>
+  <g transform="translate(0 96)"><rect class="frame" width="256" height="64"/><text x="5" y="13">MARBLES OVERVIEW</text><line class="line" x1="4" y1="18" x2="252" y2="18"/><text class="tiny" x="5" y="36">L: T/X  R: model / Deja Vu</text><text class="tiny" x="5" y="55">B3: help  hold pot: secondary</text></g>
+  <g transform="translate(256 96)"><rect class="frame" width="256" height="64"/><text class="tiny" x="5" y="24">Pots: Rate / Bias / Jitter</text><text class="tiny" x="5" y="47">Hold: Range / Gate Len / Gate Rand</text></g>
+  <text class="tiny" x="5" y="190">Rendered at 256 × 64 per panel. Cyan-only display prototype.</text>
+  <text class="tiny" x="5" y="210">Right encoder: named T Model / X Relationship; press: Off / Amount / Super-lock.</text>
+  <text class="tiny" x="5" y="230">Buttons 1, 2, 4: NT navigation. Button 3: contextual help.</text>
+</svg>

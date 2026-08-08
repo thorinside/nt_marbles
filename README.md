@@ -1,8 +1,9 @@
 # nt_marbles
 
 A disting NT port of Mutable Instruments Marbles. This repository is in the
-foundation phase: it establishes the reproducible original-source build and a
-strict boundary between upstream DSP and the disting NT host adapter.
+early implementation: it establishes the reproducible original-source build, a
+strict boundary between upstream DSP and the disting NT host adapter, and the
+approved T/X control-surface contract. See [the control-surface guide](docs/control-surface.md).
 
 ## Provenance and licensing
 
@@ -21,10 +22,11 @@ The disting NT API headers are a separate read-only submodule:
 - repository: <https://github.com/expertsleepersltd/distingNT_API>
 - revision: `f440d20c2a96a9ca43892c7418a1d8185ad47eb5` (API v13)
 
-`src/nt_marbles_plugin.cc` is the NT-only boundary. `src/marbles_dsp/` is the
-only location for the future adapter; it compiles original generator units
-straight from `third_party/eurorack`, as listed in the Makefile. No upstream
-algorithm files are copied or edited here.
+`src/nt_marbles_plugin.cc` is the NT-only boundary and declares the T/X
+control surface as host-managed parameters. `src/marbles_dsp/` is the only
+location for the future adapter; it compiles original generator units straight
+from `third_party/eurorack`, as listed in the Makefile. No upstream algorithm
+files are copied or edited here.
 
 The plugin factory GUID is `NT_MULTICHAR('T', 'h', 'M', 'B')`; `Th` reserves
 the owner's thorinside namespace.

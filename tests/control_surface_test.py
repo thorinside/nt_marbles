@@ -1,0 +1,23 @@
+#!/usr/bin/env python3
+"""Static contract checks for the reviewed Marbles NT control surface."""
+from pathlib import Path
+
+source = Path("src/nt_marbles_plugin.cc").read_text()
+docs = Path("docs/control-surface.md").read_text()
+
+for name in ("T Rate", "T Bias", "T Jitter", "T Range", "T Gate Length",
+             "T Gate Randomness", "X Spread", "X Bias", "X Steps", "Y Spread",
+             "Y Bias", "Y Steps", "T Model", "X Relationship", "T Deja Vu",
+             "X Deja Vu", "Deja Vu Amount", "Deja Vu Length"):
+    assert f'"{name}"' in source, name
+
+assert 'return kNT_button3 |' in source
+assert 'kNT_button1' not in source and 'kNT_button2' not in source and 'kNT_button4' not in source
+assert 'algorithm->help = data.controls & kNT_button3;' in source
+assert 'held[pot] ? tSecondary[pot] : tPrimary[pot]' in source
+assert 'held[pot] ? xSecondary[pot] : xPrimary[pot]' in source
+assert '"Off", "Amount", "Super-lock"' in source
+for upstream_value in ("ADC_CHANNEL_T_RATE", "ADC_CHANNEL_X_STEPS", "State::t_model",
+                       "State::x_control_mode", "State::y_range"):
+    assert upstream_value in docs, upstream_value
+print("control-surface contract checks passed")
