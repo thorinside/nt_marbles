@@ -44,7 +44,10 @@ for unit in (
     "marbles/random/lag_processor.cc", "marbles/ramp/ramp_extractor.cc",
     "marbles/resources.cc", "stmlib/dsp/units.cc",
 ):
-    assert f"$(UPSTREAM)/{unit}" in makefile, unit
+    assert f"$(OVERLAY)/{unit}" in makefile, unit
+assert "scripts/prepare-eurorack-overlay.sh" in makefile
+assert "0001-sample-rate-aware-ramp-extractor.patch" in \
+       (root / "patches/eurorack/README.md").read_text()
 assert "third_party/eurorack" in source
 assert "#include \"marbles/random/t_generator.h\"" in source
 assert "#include \"marbles/random/x_y_generator.h\"" in source
@@ -75,7 +78,8 @@ for declaration in (
     '{"X Range", 0, 2, 2, kNT_unitEnum',
     '{"Y Steps", 0, 100, 0, kNT_unitPercent',
     '{"Y Range", 0, 2, 2, kNT_unitEnum',
-    '{"Y Divider", 0, 11, 6, kNT_unitNone',
+    '{"Y Divider", 0, 11, 6, kNT_unitEnum',
+    '{"Deja Vu Length", 0, 11, 0, kNT_unitEnum',
 ):
     assert declaration in source, declaration
 
@@ -97,9 +101,9 @@ for hardware_exception in ("State::color_blind", "explicit_reset"):
 
 # Every observed host-orchestration departure is retained with reason and an
 # executable or inspectable verification method.
-for departure in ("D-NT-01", "D-NT-02", "D-NT-03", "D-NT-04", "D-NT-05", "D-NT-06", "D-NT-07"):
+for departure in ("D-NT-01", "D-NT-02", "D-NT-03", "D-NT-04", "D-NT-05", "D-NT-06", "D-NT-07", "D-NT-08"):
     assert departure in departures, departure
 for required_column in ("Original behavior", "NT adaptation and reason", "Verification method"):
     assert required_column in departures, required_column
-assert "No compatibility patch is currently required" in departures
+assert "0001-sample-rate-aware-ramp-extractor.patch" in departures
 print("verification contract checks passed")

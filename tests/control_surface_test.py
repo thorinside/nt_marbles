@@ -19,6 +19,11 @@ assert 'held[pot] ? xSecondary[pot] : xPrimary[pot]' in source
 assert '"Off", "Amount", "Super-lock"' in source
 assert '{"T Rate", -60, 60, 0, kNT_unitHasStrings' in source
 assert 'const char* const kTRanges[] = {"1/4x", "1x", "4x"};' in source
+assert 'const char* const kDejaVuLengthLabels[]' in source
+assert 'const char* const kYDividerLabels[]' in source
+assert 'TRangeFromPot(data.pots[pot])' not in source
+assert 'parameterValueFromPot(parameter, position)' in source
+assert 'crossedPickup(' in source
 assert '.parameterString = parameterString' in source
 assert '{"T Model", 0, 5, 0, kNT_unitEnum' in source
 assert '{"X Steps", 0, 100, 75, kNT_unitPercent' in source

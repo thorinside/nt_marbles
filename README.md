@@ -25,9 +25,10 @@ The disting NT API headers are a separate read-only submodule:
 `src/nt_marbles_plugin.cc` is the NT-only adapter and declares the T/X control
 surface as host-managed parameters. Its small pure conversion helpers live in
 `src/nt_marbles_host_boundary.h`; it compiles original generator units straight
-from `third_party/eurorack`, as listed in the Makefile. The immutable factory
+from a generated, patched staging copy of `third_party/eurorack`, as listed in
+the Makefile. The immutable factory
 scale table in `src/marbles_factory_scales.h` is automatically compared with
-the pinned upstream settings data. No upstream algorithm file is edited here.
+the pinned upstream settings data. The pinned checkout itself remains clean.
 
 The plugin factory GUID is `NT_MULTICHAR('T', 'h', 'M', 'B')`; `Th` reserves
 the owner's thorinside namespace.
@@ -52,8 +53,10 @@ notices, and writes `nt_marbles-plugin.zip.sha256` beside it.
 ## Compatibility overlay
 
 Compatibility changes are deliberately outside the submodule in ordered
-`patches/eurorack/*.patch` files. The initial pinned source compiles without a
-patch, so the overlay is intentionally empty. These commands are safe to use
+`patches/eurorack/*.patch` files. The current overlay makes the upstream clock
+extractor's time constants sample-rate aware. `make` runs
+`scripts/prepare-eurorack-overlay.sh` and compiles `build/eurorack-overlay`,
+leaving the pinned checkout untouched. These verification commands are safe
 when the upstream checkout is clean:
 
 ```sh
@@ -63,10 +66,10 @@ when the upstream checkout is clean:
 make verify-overlay
 ```
 
-They use `git apply` and reverse `git apply`; neither command commits to or
-changes the pinned submodule after removal. Add a patch only for a documented
-NT compatibility issue and record the behavioral departure and its verification
-in `docs/departures.md`.
+The verification path uses `git apply` and reverse `git apply`; neither command
+commits to or changes the pinned submodule after removal. `make test` also runs
+the real factory across all five documented NT sample rates and representative
+4-, 24-, and 256-frame blocks.
 
 ## Build automation
 

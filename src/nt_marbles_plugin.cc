@@ -27,7 +27,9 @@ enum Parameter {
   kTClockRoute, kXClockRoute, kResetRoute, kT1Route, kX1Route, kT2Route,
   kX2Route, kT3Route, kX3Route, kYRoute,
   // Appended so existing parameter and route indices remain preset-compatible.
-  kXRegisterCvRoute, kParameterCount,
+  kXRegisterCvRoute,
+  kT1Mode, kX1Mode, kT2Mode, kX2Mode, kT3Mode, kX3Mode, kYMode,
+  kParameterCount,
 };
 
 const char* const kDejaVuStates[] = {"Off", "Amount", "Super-lock"};
@@ -39,6 +41,12 @@ const char* const kXYRanges[] = {"Narrow", "Positive", "Full"};
 const char* const kOffOn[] = {"Off", "On"};
 const char* const kScaleNames[] = {"C major", "C minor", "Pentatonic",
                                    "Pelog", "Raag Bhairav", "Raag Shri"};
+const char* const kDejaVuLengthLabels[] = {
+    "1", "2", "3", "4", "5", "6", "7", "8", "10", "12", "14", "16"};
+const int kDejaVuLengths[] = {1, 2, 3, 4, 5, 6, 7, 8, 10, 12, 14, 16};
+const char* const kYDividerLabels[] = {
+    "1/64", "1/48", "1/32", "1/24", "1/16", "1/12",
+    "1/8", "1/6", "1/4", "1/3", "1/2", "1/1"};
 // Copied as data from pinned marbles/marbles.cc, where the physical setting
 // selects this exact twelve-entry divider table.
 const marbles::Ratio kYDividerRatios[] = {
@@ -71,12 +79,12 @@ const _NT_parameter kParameters[] = {
     {"X Relationship", 0, 2, 0, kNT_unitEnum, 0, kXRelationships},
     {"X Deja Vu", 0, 2, 0, kNT_unitEnum, 0, kDejaVuStates},
     {"Deja Vu Amount", 0, 100, 0, kNT_unitPercent, 0, nullptr},
-    {"Deja Vu Length", 1, 16, 1, kNT_unitNone, 0, nullptr},
+    {"Deja Vu Length", 0, 11, 0, kNT_unitEnum, 0, kDejaVuLengthLabels},
     {"X Range", 0, 2, 2, kNT_unitEnum, 0, kXYRanges},
     {"X Register", 0, 1, 0, kNT_unitEnum, 0, kOffOn},
     {"X Scale", 0, 5, 0, kNT_unitEnum, 0, kScaleNames},
     {"Y Range", 0, 2, 2, kNT_unitEnum, 0, kXYRanges},
-    {"Y Divider", 0, 11, 6, kNT_unitNone, 0, nullptr},
+    {"Y Divider", 0, 11, 6, kNT_unitEnum, 0, kYDividerLabels},
     NT_PARAMETER_CV_INPUT("T Clock", 0, 1)
     NT_PARAMETER_CV_INPUT("X Clock", 0, 1)
     NT_PARAMETER_CV_INPUT("Reset", 0, 2)
@@ -88,6 +96,13 @@ const _NT_parameter kParameters[] = {
     NT_PARAMETER_CV_OUTPUT("X3 Output", 0, kPhysicalOutputBusOffset + 8)
     NT_PARAMETER_CV_OUTPUT("Y Output", 0, 0)
     NT_PARAMETER_CV_INPUT("X Register CV", 0, 0)
+    NT_PARAMETER_OUTPUT_MODE("T1 Output mode")
+    NT_PARAMETER_OUTPUT_MODE("X1 Output mode")
+    NT_PARAMETER_OUTPUT_MODE("T2 Output mode")
+    NT_PARAMETER_OUTPUT_MODE("X2 Output mode")
+    NT_PARAMETER_OUTPUT_MODE("T3 Output mode")
+    NT_PARAMETER_OUTPUT_MODE("X3 Output mode")
+    NT_PARAMETER_OUTPUT_MODE("Y Output mode")
 };
 
 const uint8_t kTPage[] = {kTRate, kTBias, kTJitter, kTRange, kTGateLength,
@@ -98,8 +113,10 @@ const uint8_t kXPage[] = {kXSpread, kXBias, kXSteps, kYSpread, kYBias, kYSteps,
 const uint8_t kDejaVuPage[] = {kDejaVuAmount, kDejaVuLength};
 const uint8_t kRoutingPage[] = {kTClockRoute, kXClockRoute, kResetRoute,
                                 kXRegisterCvRoute,
-                                kT1Route, kX1Route, kT2Route, kX2Route,
-                                kT3Route, kX3Route, kYRoute};
+                                kT1Route, kT1Mode, kX1Route, kX1Mode,
+                                kT2Route, kT2Mode, kX2Route, kX2Mode,
+                                kT3Route, kT3Mode, kX3Route, kX3Mode,
+                                kYRoute, kYMode};
 const _NT_parameterPage kPages[] = {
     {"T rhythm", sizeof(kTPage), 1, {0, 0}, kTPage},
     {"X pitch", sizeof(kXPage), 2, {0, 0}, kXPage},
@@ -121,6 +138,11 @@ struct NtMarblesAlgorithm : _NT_algorithm {
   marbles::XYGenerator xyGenerator;
   marbles::NoteFilter noteFilter;
   float registerValue;
+  int maxFrames;
+  int controlFrames;
+  int potTarget[3];
+  float potPosition[3];
+  bool potPickupLocked[3];
   float* ramps;
   float* voltages;
   stmlib::GateFlags* clocks;
@@ -133,6 +155,38 @@ int clampPercent(float value) {
 }
 float asUnit(const _NT_algorithm* self, Parameter parameter) {
   return self->v[parameter] / 100.0f;
+}
+
+int boundedIndex(int value, int maximum) {
+  return value < 0 ? 0 : (value > maximum ? maximum : value);
+}
+
+float normalizedParameterValue(const _NT_algorithm* self,
+                               Parameter parameter) {
+  if (parameter == kTRate) {
+    return nt_marbles::PotFromTRate(self->v[parameter]);
+  }
+  if (parameter == kTRange) {
+    return (boundedIndex(self->v[parameter], 2) + 0.5f) / 3.0f;
+  }
+  return nt_marbles::Clamp(self->v[parameter] / 100.0f, 0.0f, 1.0f);
+}
+
+int parameterValueFromPot(Parameter parameter, float position) {
+  if (parameter == kTRate) {
+    const float coordinate = nt_marbles::TRateFromPot(position);
+    return static_cast<int>(
+        coordinate + (coordinate < 0.0f ? -0.5f : 0.5f));
+  }
+  if (parameter == kTRange) {
+    return nt_marbles::TRangeFromPot(position);
+  }
+  return clampPercent(position);
+}
+
+bool crossedPickup(float previous, float current, float target) {
+  return (previous <= target && current >= target) ||
+         (previous >= target && current <= target);
 }
 
 void setFromUi(_NT_algorithm* self, Parameter parameter, int value) {
@@ -172,8 +226,21 @@ _NT_algorithm* construct(const _NT_algorithmMemoryPtrs& pointers,
     algorithm->xyGenerator.LoadScale(i, nt_marbles::kFactoryScales[i]);
   }
   algorithm->noteFilter.Init();
+  // The physical input exists continuously and idles at the normalized
+  // midpoint. Warm the filter to that safe disconnected value.
+  for (int i = 0; i < 16; ++i) algorithm->noteFilter.Process(0.5f);
   algorithm->registerValue = 0.5f;
+  const Parameter initialPotTargets[] = {kTRate, kTBias, kTJitter};
+  const float initialPotPositions[] = {0.5f, 0.5f, 0.0f};
+  for (int i = 0; i < 3; ++i) {
+    algorithm->potTarget[i] = initialPotTargets[i];
+    algorithm->potPosition[i] = initialPotPositions[i];
+    algorithm->potPickupLocked[i] = false;
+  }
   const uint32_t frames = NT_globals.maxFramesPerStep;
+  algorithm->maxFrames = static_cast<int>(frames);
+  algorithm->controlFrames = nt_marbles::ControlBlockFrames(
+      static_cast<float>(NT_globals.sampleRate));
   algorithm->ramps = reinterpret_cast<float*>(pointers.dtc);
   algorithm->voltages = algorithm->ramps + 4 * frames;
   algorithm->clocks = reinterpret_cast<stmlib::GateFlags*>(algorithm->voltages + 4 * frames);
@@ -187,14 +254,19 @@ const float* inputBus(const _NT_algorithm* self, Parameter route, float* buses,
   return routeValue > 0 && routeValue <= kNT_lastBus
       ? buses + (routeValue - 1) * frames : nullptr;
 }
-void writeOutput(const _NT_algorithm* self, Parameter route, float* buses,
-                 int frames, const float* source, int sourceStride = 1) {
+void writeOutput(const _NT_algorithm* self, Parameter route, Parameter mode,
+                 float* buses,
+                 int frames, const float* source, int sourceStride = 1,
+                 int count = -1) {
   const int routeValue = self->v[route];
   if (routeValue <= 0 || routeValue > kNT_lastBus) return;
   float* destination = buses + (routeValue - 1) * frames;
-  for (int i = 0; i < frames; ++i) {
-    destination[i] = nt_marbles::InterleavedSample(
+  const int samples = count < 0 ? frames : count;
+  for (int i = 0; i < samples; ++i) {
+    const float sample = nt_marbles::InterleavedSample(
         source, i, 0, sourceStride);
+    if (self->v[mode]) destination[i] = sample;
+    else destination[i] += sample;
   }
 }
 
@@ -216,20 +288,6 @@ void step(_NT_algorithm* self, float* busFrames, int numFramesBy4) {
         : static_cast<stmlib::GateFlags>(stmlib::GATE_FLAG_LOW);
     algorithm->previousXClock = algorithm->clocks[frames + i];
   }
-  bool didReset = false;
-  if (reset) {
-    for (int i = 0; i < frames; ++i) {
-      const stmlib::GateFlags flags = stmlib::ExtractGateFlags(
-          algorithm->previousReset, reset[i] > 1.0f);
-      algorithm->previousReset = flags;
-      didReset = didReset || (flags & stmlib::GATE_FLAG_RISING);
-    }
-  } else {
-    algorithm->previousReset = stmlib::GATE_FLAG_LOW;
-  }
-
-  marbles::Ramps ramps = {algorithm->ramps, algorithm->ramps + frames,
-                           {algorithm->ramps + 2 * frames, algorithm->ramps + 3 * frames}};
   algorithm->tGenerator.set_model(static_cast<marbles::TGeneratorModel>(self->v[kTModel]));
   algorithm->tGenerator.set_range(static_cast<marbles::TGeneratorRange>(self->v[kTRange]));
   algorithm->tGenerator.set_rate(self->v[kTRate]);
@@ -237,27 +295,20 @@ void step(_NT_algorithm* self, float* busFrames, int numFramesBy4) {
   algorithm->tGenerator.set_jitter(asUnit(self, kTJitter));
   algorithm->tGenerator.set_deja_vu(self->v[kTDejaVu] == 2 ? 0.5f :
                                      (self->v[kTDejaVu] ? asUnit(self, kDejaVuAmount) : 0.0f));
-  algorithm->tGenerator.set_length(self->v[kDejaVuLength]);
+  algorithm->tGenerator.set_length(
+      kDejaVuLengths[boundedIndex(self->v[kDejaVuLength], 11)]);
   algorithm->tGenerator.set_pulse_width_mean(asUnit(self, kTGateLength));
   algorithm->tGenerator.set_pulse_width_std(asUnit(self, kTGateRandomness));
-  algorithm->tGenerator.Process(tClock != nullptr, &didReset, algorithm->clocks,
-                                ramps, algorithm->gates, frames);
-
   marbles::GroupSettings x = {};
   x.control_mode = static_cast<marbles::ControlMode>(self->v[kXRelationship]);
   x.voltage_range = static_cast<marbles::VoltageRange>(self->v[kXRange]);
   x.register_mode = self->v[kXRegister] != 0;
-  if (registerCv) {
-    algorithm->registerValue = algorithm->noteFilter.Process(
-        nt_marbles::RegisterValueFromVolts(registerCv[frames - 1]));
-  } else {
-    algorithm->registerValue = 0.5f;
-  }
-  x.register_value = algorithm->registerValue;
   x.spread = asUnit(self, kXSpread); x.bias = asUnit(self, kXBias); x.steps = asUnit(self, kXSteps);
   x.deja_vu = self->v[kXDejaVu] == 2 ? 0.5f :
               (self->v[kXDejaVu] ? asUnit(self, kDejaVuAmount) : 0.0f);
-  x.scale_index = self->v[kXScale]; x.length = self->v[kDejaVuLength]; x.ratio = {1, 1};
+  x.scale_index = self->v[kXScale];
+  x.length = kDejaVuLengths[boundedIndex(self->v[kDejaVuLength], 11)];
+  x.ratio = {1, 1};
   marbles::GroupSettings y = x;
   y.control_mode = marbles::CONTROL_MODE_IDENTICAL;
   y.voltage_range = static_cast<marbles::VoltageRange>(self->v[kYRange]);
@@ -267,31 +318,72 @@ void step(_NT_algorithm* self, float* busFrames, int numFramesBy4) {
   y.ratio = kYDividerRatios[self->v[kYDivider]];
   const marbles::ClockSource xClockSource = xClock ? marbles::CLOCK_SOURCE_EXTERNAL
                                                     : marbles::CLOCK_SOURCE_INTERNAL_T1_T2_T3;
-  algorithm->xyGenerator.Process(xClockSource, x, y, &didReset,
-                                 algorithm->clocks + frames, ramps,
-                                 algorithm->voltages, frames);
+  const int scratchStride = algorithm->maxFrames;
+  marbles::Ramps ramps = {
+      algorithm->ramps, algorithm->ramps + scratchStride,
+      {algorithm->ramps + 2 * scratchStride,
+       algorithm->ramps + 3 * scratchStride}};
+  for (int offset = 0; offset < frames; offset += algorithm->controlFrames) {
+    const int remaining = frames - offset;
+    const int chunk = remaining < algorithm->controlFrames
+        ? remaining : algorithm->controlFrames;
+    bool didReset = false;
+    if (reset) {
+      for (int i = 0; i < chunk; ++i) {
+        const stmlib::GateFlags flags = stmlib::ExtractGateFlags(
+            algorithm->previousReset, reset[offset + i] > 1.0f);
+        algorithm->previousReset = flags;
+        didReset = didReset || (flags & stmlib::GATE_FLAG_RISING);
+      }
+    } else {
+      algorithm->previousReset = stmlib::GATE_FLAG_LOW;
+    }
 
-  float* t1 = algorithm->ramps; float* t2 = algorithm->ramps + frames;
-  float* t3 = algorithm->ramps + 2 * frames;
-  for (int i = 0; i < frames; ++i) {
-    // Read every generator result before reusing the ramp buffers as NT
-    // output scratch. In particular, t1 aliases ramps.master.
-    const bool t1High = nt_marbles::InterleavedSample(
-        algorithm->gates, i, 0, 2);
-    const bool t2High = ramps.master[i] < 0.5f;
-    const bool t3High = nt_marbles::InterleavedSample(
-        algorithm->gates, i, 1, 2);
-    t1[i] = t1High ? 5.0f : 0.0f;
-    t2[i] = t2High ? 5.0f : 0.0f;
-    t3[i] = t3High ? 5.0f : 0.0f;
+    const float registerInput = registerCv
+        ? nt_marbles::RegisterValueFromVolts(
+              registerCv[offset + chunk - 1])
+        : 0.5f;
+    algorithm->registerValue = algorithm->noteFilter.Process(registerInput);
+    x.register_value = registerCv ? algorithm->registerValue : 0.5f;
+
+    algorithm->tGenerator.Process(
+        tClock != nullptr, &didReset, algorithm->clocks + offset,
+        ramps, algorithm->gates, chunk);
+    algorithm->xyGenerator.Process(
+        xClockSource, x, y, &didReset,
+        algorithm->clocks + frames + offset, ramps,
+        algorithm->voltages, chunk);
+
+    float* t1 = algorithm->ramps;
+    float* t2 = algorithm->ramps + scratchStride;
+    float* t3 = algorithm->ramps + 2 * scratchStride;
+    for (int i = 0; i < chunk; ++i) {
+      // Read every generator result before reusing the ramp buffers as NT
+      // output scratch. In particular, t1 aliases ramps.master.
+      const bool t1High = nt_marbles::InterleavedSample(
+          algorithm->gates, i, 0, 2);
+      const bool t2High = ramps.master[i] < 0.5f;
+      const bool t3High = nt_marbles::InterleavedSample(
+          algorithm->gates, i, 1, 2);
+      t1[i] = t1High ? 5.0f : 0.0f;
+      t2[i] = t2High ? 5.0f : 0.0f;
+      t3[i] = t3High ? 5.0f : 0.0f;
+    }
+    writeOutput(self, kT1Route, kT1Mode,
+                busFrames + offset, frames, t1, 1, chunk);
+    writeOutput(self, kX1Route, kX1Mode, busFrames + offset, frames,
+                algorithm->voltages, 4, chunk);
+    writeOutput(self, kT2Route, kT2Mode,
+                busFrames + offset, frames, t2, 1, chunk);
+    writeOutput(self, kX2Route, kX2Mode, busFrames + offset, frames,
+                algorithm->voltages + 1, 4, chunk);
+    writeOutput(self, kT3Route, kT3Mode,
+                busFrames + offset, frames, t3, 1, chunk);
+    writeOutput(self, kX3Route, kX3Mode, busFrames + offset, frames,
+                algorithm->voltages + 2, 4, chunk);
+    writeOutput(self, kYRoute, kYMode, busFrames + offset, frames,
+                algorithm->voltages + 3, 4, chunk);
   }
-  writeOutput(self, kT1Route, busFrames, frames, t1);
-  writeOutput(self, kX1Route, busFrames, frames, algorithm->voltages, 4);
-  writeOutput(self, kT2Route, busFrames, frames, t2);
-  writeOutput(self, kX2Route, busFrames, frames, algorithm->voltages + 1, 4);
-  writeOutput(self, kT3Route, busFrames, frames, t3);
-  writeOutput(self, kX3Route, busFrames, frames, algorithm->voltages + 2, 4);
-  writeOutput(self, kYRoute, busFrames, frames, algorithm->voltages + 3, 4);
 }
 
 uint32_t hasCustomUi(_NT_algorithm* /*self*/) {
@@ -323,18 +415,29 @@ void customUi(_NT_algorithm* self, const _NT_uiData& data) {
   const Parameter xPrimary[] = {kXSpread, kXBias, kXSteps};
   const Parameter xSecondary[] = {kYSpread, kYBias, kYSteps};
   for (int pot = 0; pot < 3; ++pot) {
-    if (!(data.controls & changed[pot])) continue;
     const Parameter parameter = algorithm->xWorkspace
         ? (held[pot] ? xSecondary[pot] : xPrimary[pot])
         : (held[pot] ? tSecondary[pot] : tPrimary[pot]);
-    int value = clampPercent(data.pots[pot]);
-    if (parameter == kTRate) {
-      const float semitones = nt_marbles::TRateFromPot(data.pots[pot]);
-      value = static_cast<int>(semitones + (semitones < 0.0f ? -0.5f : 0.5f));
-    } else if (parameter == kTRange) {
-      value = value * 2 / 100;
+    const float position = nt_marbles::Clamp(data.pots[pot], 0.0f, 1.0f);
+    if (algorithm->potTarget[pot] != parameter) {
+      algorithm->potTarget[pot] = parameter;
+      algorithm->potPosition[pot] = position;
+      const float target = normalizedParameterValue(self, parameter);
+      algorithm->potPickupLocked[pot] =
+          (position < target - 0.005f || position > target + 0.005f);
     }
-    setFromUi(self, parameter, value);
+    if (!(data.controls & changed[pot])) continue;
+    if (algorithm->potPickupLocked[pot]) {
+      const float target = normalizedParameterValue(self, parameter);
+      const bool pickedUp = crossedPickup(
+          algorithm->potPosition[pot], position, target);
+      algorithm->potPosition[pot] = position;
+      if (!pickedUp) continue;
+      algorithm->potPickupLocked[pot] = false;
+    } else {
+      algorithm->potPosition[pot] = position;
+    }
+    setFromUi(self, parameter, parameterValueFromPot(parameter, position));
   }
   if (data.encoders[1] != 0) {
     const Parameter parameter = algorithm->xWorkspace
@@ -360,14 +463,11 @@ void setupUi(_NT_algorithm* self, _NT_float3& pots) {
       algorithm->xWorkspace ? kXBias : kTBias,
       algorithm->xWorkspace ? kXSteps : kTJitter};
   for (int i = 0; i < 3; ++i) {
-    pots[i] = primary[i] == kTRate
-        ? nt_marbles::PotFromTRate(self->v[primary[i]])
-        : self->v[primary[i]] / 100.0f;
+    pots[i] = normalizedParameterValue(self, primary[i]);
+    algorithm->potTarget[i] = primary[i];
+    algorithm->potPosition[i] = pots[i];
+    algorithm->potPickupLocked[i] = false;
   }
-}
-
-int boundedIndex(int value, int maximum) {
-  return value < 0 ? 0 : (value > maximum ? maximum : value);
 }
 
 int formatInteger(char* text, int value) {

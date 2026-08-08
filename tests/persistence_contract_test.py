@@ -13,7 +13,8 @@ parameter_block = source.split("const _NT_parameter kParameters[] = {", 1)[1].sp
 assert parameter_block.count('{"') == 23
 assert parameter_block.count("NT_PARAMETER_CV_INPUT") == 4
 assert parameter_block.count("NT_PARAMETER_CV_OUTPUT") == 7
-assert "kXRegisterCvRoute, kParameterCount" in source
+assert parameter_block.count("NT_PARAMETER_OUTPUT_MODE") == 7
+assert "kT1Mode, kX1Mode, kT2Mode, kX2Mode, kT3Mode, kX3Mode, kYMode" in source
 assert "requirements.numParameters = kParameterCount" in source
 assert "const int16_t*\t\t\t\tv;\t\t\t\t\t// Pointer to the algorithm's parameter values. Managed by the system." in api
 
@@ -24,6 +25,7 @@ assert ".deserialise = nullptr" in source
 assert "NT_setParameterFromUi" in source
 assert "self->v[route]" in source
 assert "self->v[route] =" not in source
+assert "self->v[mode]" in source
 
 # Saved routes are used as-is when valid, otherwise safely disconnected; no
 # fallback route can silently replace a saved selection.

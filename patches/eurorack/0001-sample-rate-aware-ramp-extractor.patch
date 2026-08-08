@@ -1,0 +1,72 @@
+diff --git a/marbles/ramp/ramp_extractor.cc b/marbles/ramp/ramp_extractor.cc
+index 404090c..c522870 100644
+--- a/marbles/ramp/ramp_extractor.cc
++++ b/marbles/ramp/ramp_extractor.cc
+@@ -56 +56 @@ inline bool IsWithinTolerance(float x, float y, float error) {
+-void RampExtractor::Init(float max_frequency) {
++void RampExtractor::Init(float max_frequency, float sample_rate) {
+@@ -58 +58,2 @@ void RampExtractor::Init(float max_frequency) {
+-  audio_rate_period_ = 1.0f / (100.0f / 32000.0f);
++  sample_rate_ = sample_rate;
++  audio_rate_period_ = sample_rate_ / 100.0f;
+@@ -73 +74 @@ void RampExtractor::Reset() {
+-  reset_interval_ = 32000 * 3;
++  reset_interval_ = static_cast<uint32_t>(sample_rate_ * 3.0f);
+@@ -78,2 +79,2 @@ void RampExtractor::Reset() {
+-  p.on_duration = 2000;
+-  p.total_duration = 4000;
++  p.on_duration = static_cast<uint32_t>(sample_rate_ / 16.0f);
++  p.total_duration = static_cast<uint32_t>(sample_rate_ / 8.0f);
+@@ -84 +85 @@ void RampExtractor::Reset() {
+-  next_bucket_ = 48.0f;
++  next_bucket_ = sample_rate_ * 0.0015f;
+@@ -87 +88,2 @@ void RampExtractor::Reset() {
+-  fill(&predicted_period_[0], &predicted_period_[PREDICTOR_LAST], 4000.0f);
++  fill(&predicted_period_[0], &predicted_period_[PREDICTOR_LAST],
++       sample_rate_ / 8.0f);
+@@ -230 +232,3 @@ void RampExtractor::Process(
+-          lp_coefficient_ = no_glide ? 1.0f : min(period * 0.00001f, 0.1f);
++          lp_coefficient_ = no_glide
++              ? 1.0f
++              : min(period * 0.32f / sample_rate_, 0.1f);
+@@ -237 +241 @@ void RampExtractor::Process(
+-          if (p.on_duration < 32) {
++          if (p.on_duration < sample_rate_ * 0.001f) {
+@@ -254 +258,2 @@ void RampExtractor::Process(
+-                  (0.01f + max_train_phase_ - train_phase_) * 0.0625f;
++                  (0.01f + max_train_phase_ - train_phase_) *
++                  2000.0f / sample_rate_;
+@@ -269 +274 @@ void RampExtractor::Process(
+-            std::max(4.0f / target_frequency_, 32000 * 3.0f));
++            std::max(4.0f / target_frequency_, sample_rate_ * 3.0f));
+@@ -333 +338 @@ void RampExtractor::Process(
+-}  // namespace marbles
+\ No newline at end of file
++}  // namespace marbles
+diff --git a/marbles/ramp/ramp_extractor.h b/marbles/ramp/ramp_extractor.h
+index 69db2b8..635c289 100644
+--- a/marbles/ramp/ramp_extractor.h
++++ b/marbles/ramp/ramp_extractor.h
+@@ -53 +53 @@ class RampExtractor {
+-  void Init(float max_frequency);
++  void Init(float max_frequency, float sample_rate);
+@@ -137,0 +138 @@ class RampExtractor {
++  float sample_rate_;
+diff --git a/marbles/random/t_generator.cc b/marbles/random/t_generator.cc
+index 7d80751..67fa865 100644
+--- a/marbles/random/t_generator.cc
++++ b/marbles/random/t_generator.cc
+@@ -153 +153 @@ void TGenerator::Init(RandomStream* random_stream, float sr) {
+-  ramp_extractor_.Init(1000.0f / sr);
++  ramp_extractor_.Init(1000.0f / sr, sr);
+diff --git a/marbles/random/x_y_generator.cc b/marbles/random/x_y_generator.cc
+index dd1b108..2301791 100644
+--- a/marbles/random/x_y_generator.cc
++++ b/marbles/random/x_y_generator.cc
+@@ -45 +45 @@ void XYGenerator::Init(RandomStream* random_stream, float sr) {
+-  ramp_extractor_.Init(8000.0f / sr);
++  ramp_extractor_.Init(8000.0f / sr, sr);
+@@ -207 +207 @@ void XYGenerator::Process(
+-}  // namespace marbles
+\ No newline at end of file
++}  // namespace marbles

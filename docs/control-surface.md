@@ -20,6 +20,12 @@ state: **Off**, **Amount**, **Super-lock**. Button 3, while held, presents a
 two-row contextual gesture reminder. Buttons 1, 2, and 4 are not claimed by
 the plug-in and remain NT navigation controls.
 
+Whenever a pot changes between a T primary, T held, X primary, or X held
+target, the custom UI locks that pot until its physical position crosses the
+new target's value. This target-aware pickup extends the host's initial
+`setupUi()` soft takeover across all twelve live target transitions, so a
+workspace or hold change cannot jump the newly selected parameter.
+
 The custom display uses text at fixed coordinates plus a dim cyan frame and
 header divider within the 256 × 64 NT screen. The T header shows the current
 model and Deja Vu state. The X header shows the current relationship, active
@@ -63,11 +69,17 @@ below are declared normal NT parameters and therefore are host-mappable.
 at the center. Internally that position maps to the original exponential
 −60…+60 rate coordinate; it is not presented as semitones because it controls
 clock speed or external-clock division/multiplication, not pitch. `T Range`
-uses the original 1/4x, 1x, and 4x clock ranges. The six `X Scale` choices load
+uses three equal pot regions for the original 1/4x, 1x, and 4x clock ranges.
+`Deja Vu Length` exposes only the original choices 1–8, 10, 12, 14, and 16.
+`Y Divider` displays its twelve musical ratios from 1/64 through 1/1 rather
+than the stored 0–11 index. The six `X Scale` choices load
 the exact pinned factory tables:
 C major, C minor, Pentatonic, Pelog, Raag Bhairav That, and Raag Shri. Persisted
 defaults mirror upstream `Settings::Init`: X and Y Range are Full, Y Steps is
-0%, and Y Divider is 1/8. The upstream-only Markov enum is not exposed because
+0%, and Y Divider is 1/8. Both official manuals describe that Y default as
+1/16, but the final pinned source's `128 * 12 >> 8` lookup selects 1/8; this
+port follows the final source and records the discrepancy as D-NT-08. The
+upstream-only Markov enum is not exposed because
 the original panel and persisted state constrain T Model to the first six
 choices.
 
@@ -109,6 +121,11 @@ new-instance routes below leave physical outputs 1 and 2 unused.
 | X3 Output | CV output | output 8 (bus 20) | Marbles X voltage channel 3 → NT CV signal. |
 | Y Output | CV output | disconnected (0) | Marbles Y voltage channel → independently selectable NT CV signal. |
 
+Each of the seven outputs also has a normal NT **Add/Replace** mode parameter,
+defaulting to Add. Add sums Marbles onto the existing bus; Replace overwrites
+that bus. This makes shared-bus and algorithm-chain behavior explicit instead
+of silently replacing whatever an earlier algorithm wrote.
+
 The primary and held controls in the preceding tables are adjustable
 host-mappable parameters. `step()` maps the displayed T Rate knob position to
 the original exponential rate coordinate and maps remaining percentages and
@@ -118,10 +135,17 @@ frames; X1/X2/X3/Y are deinterleaved from the four-channel voltage frames. No
 route is stored by plug-in serialization (`serialise` and `deserialise` are
 null).
 
+The original generators are called at the same elapsed-time control cadence as
+their five-frame/32 kHz hardware blocks. A removable overlay also converts the
+clock extractor's 32 kHz time constants to the active NT sample rate. The
+engine matrix executes the real factory at 32, 44.1, 48, 88.2, and 96 kHz and
+at 4-, 24-, and 256-frame host blocks.
+
 ## Host-native preset restoration
 
 The declared `kParameters` array is the complete preset surface: 23 musical
-values, four signal-input routes, and seven output routes. The NT API owns
+values, four signal-input routes, seven output routes, and seven output modes.
+The NT API owns
 `_NT_algorithm::v`, so normal host preset save/reload restores those declared
 values and routes; nt_marbles keeps no duplicate parameter or routing store.
 

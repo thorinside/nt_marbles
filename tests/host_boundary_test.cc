@@ -34,6 +34,16 @@ int main() {
   assert(Near(nt_marbles::PotFromTRate(0.0f), 0.5f));
   assert(Near(nt_marbles::PotFromTRate(60.0f), 1.0f));
 
+  assert(nt_marbles::TRangeFromPot(-1.0f) == 0);
+  assert(nt_marbles::TRangeFromPot(0.32f) == 0);
+  assert(nt_marbles::TRangeFromPot(0.34f) == 1);
+  assert(nt_marbles::TRangeFromPot(0.66f) == 1);
+  assert(nt_marbles::TRangeFromPot(0.67f) == 2);
+  assert(nt_marbles::TRangeFromPot(1.0f) == 2);
+  assert(nt_marbles::ControlBlockFrames(32000.0f) == 5);
+  assert(nt_marbles::ControlBlockFrames(48000.0f) == 8);
+  assert(nt_marbles::ControlBlockFrames(96000.0f) == 15);
+
   assert(Near(nt_marbles::RegisterValueFromVolts(-8.0f), 0.0f));
   assert(Near(nt_marbles::RegisterValueFromVolts(-5.0f), 0.0f));
   assert(Near(nt_marbles::RegisterValueFromVolts(0.0f), 0.5f));

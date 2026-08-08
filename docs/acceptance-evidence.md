@@ -16,23 +16,26 @@ and that T Range reused the unrelated X/Y voltage-range labels. These findings
 reopened their automated slices. The encoder event contract, live numeric
 display, visible active scale, quantized new-instance X Steps value, normalized
 T Rate presentation, and distinct clock-range labels now have executable
-regression coverage. The owner fields below remain pending until the rebuilt
+regression coverage. The official-manual audit then found and corrected engine
+cadence/sample-rate handling, stale soft takeover after target changes, T Range
+partitioning, loop-length choices, Y ratio presentation, and Add/Replace bus
+semantics. The owner fields below remain pending until the rebuilt
 object passes one final validation session.
 
 | Criterion | Current disposition | Durable evidence | Final owner observation |
 | --- | --- | --- | --- |
 | AC-001 | Automated pass | README and `verification_contract_test.py` identify and verify Eurorack revision `08460a69a7e1f7a81c5a2abcc7189c9a6b7208d4`. | Not required. |
 | AC-002 | Automated pass | `src/nt_marbles_plugin.cc` is the NT boundary; pinned generator sources are compiled directly by the Makefile; host conversion helpers are isolated in `src/nt_marbles_host_boundary.h`. | Not required. |
-| AC-003 | Automated pass | `docs/departures.md` records D-NT-01 through D-NT-06 with original behavior, NT adaptation/reason, and verification method. | Confirm no unexpected musical departure during final use. |
-| AC-004 | Automated pass | Recursive submodules, exact revisions, Makefile source list, overlay scripts, README reproduction instructions, and CI path are checked in. | Not required. |
+| AC-003 | Automated pass | `docs/departures.md` records D-NT-01 through D-NT-08 with original behavior, NT adaptation/reason, and verification method, including manual/source ambiguity and omitted reseed gesture. | Confirm no unexpected musical departure during final use. |
+| AC-004 | Automated pass | Recursive submodules, exact revisions, staged compatibility overlay, README reproduction instructions, and CI path are checked in; the engine matrix covers all five documented sample rates. | Not required. |
 | AC-005 | Automated pass | Real draw/custom-UI callbacks prove visible T/X mode, live model/relationship and Deja Vu state, primary labels, held alternatives, overview, and contextual help. | Confirm the corrected live screens are understandable. |
 | AC-006 | Pending owner | The approved rendered prototype is `docs/control-surface-prototype.svg`; executable draw evidence proves its frame, divider, hierarchy, labels, and states. | Approve or reject mapping, hierarchy, and interaction on the exact final object. |
-| AC-007 | Automated pass | `make verify-overlay` applies/removes the empty ordered overlay and asserts the pinned Eurorack checkout is clean. | Not required. |
-| AC-008 | Automated pass | Real custom-UI tests cover every primary and same-pot held alternative; unchanged value snapshots prove plain presses are non-destructive; shape coordinates are bounded to 256 x 64. | Confirm physical hold-and-turn ergonomics and lack of jumps. |
+| AC-007 | Automated pass | `make verify-overlay` applies/removes the sample-rate compatibility patch, asserts the pinned checkout is clean, and prepares the same staged source compiled by normal builds. | Not required. |
+| AC-008 | Automated pass | Real custom-UI tests cover every primary and held target, target-aware pickup crossings, T Range boundaries, non-destructive plain presses, and bounded 256 x 64 drawing. | Confirm physical hold-and-turn ergonomics and lack of jumps. |
 | AC-009 | Automated pass | The real claimed-control mask excludes Buttons 1/2/4, includes Button 3, and executable tests prove contextual T/X help and no mutation from host buttons. | Confirm normal host navigation on hardware. |
 | AC-010 | Automated match; owner pending | Real callback tests cover FR-014 through FR-018: paired T/X pot layers, both left-encoder actions, both right-encoder actions, and explicit named states. | Approve Faceplate-led concept 6 on hardware. |
-| AC-011 | Automated pass | The original-parameter table in `docs/control-surface.md` covers every ADC/state value; persistence and verification tests check the complete 23-parameter musical surface. | Spot-check musical behavior in final session. |
-| AC-012 | Automated pass | The original-output table covers T1/T2/T3/X1/X2/X3/Y; actual processing observes every channel through its independently configured route. | Confirm physical output activity in final session. |
+| AC-011 | Automated pass | The original-parameter table covers every ADC/state value; exact tests cover the original 12 loop lengths, all Y-divider labels, scales, defaults, and the complete 23-parameter musical surface. | Spot-check musical behavior in final session. |
+| AC-012 | Automated pass | The original-output table covers T1/T2/T3/X1/X2/X3/Y; actual processing observes every channel and proves per-output Add/Replace behavior. | Confirm physical output activity in final session. |
 | AC-013 | Automated pass | The signal-routing table traces all four inputs and seven outputs; the integration harness drives actual buses through `step()` and catches interleaving and T2 overwrite defects. | Confirm the final patch on physical inputs/outputs. |
 | AC-014 | Automated pass | The Makefile compiles the pinned TGenerator, XYGenerator, OutputChannel, Quantizer, distributions, lag, ramp, resources, and stmlib units; exact scale data is compared to upstream. | Not required. |
 | AC-015 | Automated pass | Required disting NT and upstream headers are pinned; README documents Makefile and `.github/workflows/build.yml`; CI runs native tests, overlay verification, ARM packaging, and artifact upload. | Not required. |
@@ -41,7 +44,7 @@ object passes one final validation session.
 | AC-018 | Automated pass | Real factory defaults assert independent T Clock=1, X Clock=1, Reset=2; external and T-normalled clock paths both execute; all inputs can be independently set to 0 or any valid bus. | Confirm clock and reset patching in final session. |
 | AC-019 | Automated pass | Real factory defaults assert T1=15, X1=16, T2=17, X2=18, T3=19, X3=20 (physical outputs 3 through 8); processing proves outputs 1/2 remain untouched. | Confirm default physical outputs in final session. |
 | AC-020 | Automated pass | Y is a declared independent route with default 0 and full valid bus range; actual processing proves distinct Y activity when routed. | Confirm a chosen Y route on hardware. |
-| AC-021 | Automated contract pass; owner reload pending | The complete surface is 23 musical parameters, four inputs, and seven outputs in host-managed `v`; no plugin serialisation, duplicate route state, route rewriting, or fallback substitution exists. | Save/reload the exact final preset and confirm every sampled parameter/route restores. |
+| AC-021 | Automated contract pass; owner reload pending | The complete 41-value surface is 23 musical parameters, four inputs, seven outputs, and seven output modes in host-managed `v`; no duplicate route state or substitution exists. | Save/reload the exact final preset and confirm every sampled parameter/route/mode restores. |
 
 ## Automated commands
 

@@ -12,5 +12,5 @@ git -C "$upstream" rev-parse --is-inside-work-tree >/dev/null 2>&1 || { echo "Mi
 
 set -- "$patches"/*.patch
 [ -e "$1" ] || { echo "No eurorack compatibility patches to apply."; exit 0; }
-git -C "$upstream" apply --whitespace=error "$@"
+git -C "$upstream" apply --unidiff-zero --whitespace=error "$@"
 printf 'Applied %s compatibility patch(es).\n' "$#"

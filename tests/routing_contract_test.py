@@ -25,20 +25,24 @@ assert "routeValue <= 0 || routeValue > kNT_lastBus" in source
 assert "tClock != nullptr" in source
 assert "xClock ? marbles::CLOCK_SOURCE_EXTERNAL" in source
 for statement in (
-    "writeOutput(self, kT1Route, busFrames, frames, t1)",
-    "writeOutput(self, kX1Route, busFrames, frames, algorithm->voltages, 4)",
-    "writeOutput(self, kT2Route, busFrames, frames, t2)",
-    "writeOutput(self, kX2Route, busFrames, frames, algorithm->voltages + 1, 4)",
-    "writeOutput(self, kT3Route, busFrames, frames, t3)",
-    "writeOutput(self, kX3Route, busFrames, frames, algorithm->voltages + 2, 4)",
-    "writeOutput(self, kYRoute, busFrames, frames, algorithm->voltages + 3, 4)",
+    "writeOutput(self, kT1Route, kT1Mode",
+    "writeOutput(self, kX1Route, kX1Mode",
+    "writeOutput(self, kT2Route, kT2Mode",
+    "writeOutput(self, kX2Route, kX2Mode",
+    "writeOutput(self, kT3Route, kT3Mode",
+    "writeOutput(self, kX3Route, kX3Mode",
+    "writeOutput(self, kYRoute, kYMode",
 ):
     assert statement in source, statement
-assert "InterleavedSample(\n        algorithm->gates, i, 0, 2)" in source
-assert "InterleavedSample(\n        algorithm->gates, i, 1, 2)" in source
-assert "RegisterValueFromVolts(registerCv[frames - 1])" in source
+assert "algorithm->gates, i, 0, 2)" in source
+assert "algorithm->gates, i, 1, 2)" in source
+assert "registerCv[offset + chunk - 1]" in source
+assert "algorithm->controlFrames" in source
+assert "if (self->v[mode]) destination[i] = sample" in source
+assert "else destination[i] += sample" in source
 for section in ("Signal routing and output coverage", "Original output coverage"):
     assert section in docs
 for unit in ("marbles/random/output_channel.cc", "marbles/ramp/ramp_extractor.cc", "marbles/resources.cc"):
     assert unit in makefile
+assert "engine-matrix" in makefile
 print("routing contract checks passed")
