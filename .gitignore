@@ -2,3 +2,4 @@ build/
 plugins/
 release/
 *.zip
+*.zip.sha256

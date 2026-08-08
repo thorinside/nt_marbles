@@ -56,7 +56,10 @@ const _NT_parameter kParameters[] = {
     {"T Deja Vu", 0, 2, 0, kNT_unitEnum, 0, kDejaVuStates},
     {"X Spread", 0, 100, 50, kNT_unitPercent, 0, nullptr},
     {"X Bias", 0, 100, 50, kNT_unitPercent, 0, nullptr},
-    {"X Steps", 0, 100, 50, kNT_unitPercent, 0, nullptr},
+    // The original hardware has no stored power-on value for this physical
+    // pot. Start above the unquantized midpoint so the selected factory scale
+    // is audible on a new NT instance.
+    {"X Steps", 0, 100, 75, kNT_unitPercent, 0, nullptr},
     {"Y Spread", 0, 100, 50, kNT_unitPercent, 0, nullptr},
     {"Y Bias", 0, 100, 50, kNT_unitPercent, 0, nullptr},
     {"Y Steps", 0, 100, 0, kNT_unitPercent, 0, nullptr},
@@ -295,7 +298,9 @@ uint32_t hasCustomUi(_NT_algorithm* /*self*/) {
 void customUi(_NT_algorithm* self, const _NT_uiData& data) {
   auto* algorithm = static_cast<NtMarblesAlgorithm*>(self);
   algorithm->help = data.controls & kNT_button3;
-  if ((data.controls & kNT_encoderL) && data.encoders[0] != 0) {
+  // Encoder deltas are reported in encoders[]. Unlike pots, their bits are
+  // used to claim the controls but are not present in data.controls.
+  if (data.encoders[0] != 0) {
     algorithm->xWorkspace = data.encoders[0] > 0;
     algorithm->overview = false;
   }
@@ -326,7 +331,7 @@ void customUi(_NT_algorithm* self, const _NT_uiData& data) {
     }
     setFromUi(self, parameter, value);
   }
-  if ((data.controls & kNT_encoderR) && data.encoders[1] != 0) {
+  if (data.encoders[1] != 0) {
     const Parameter parameter = algorithm->xWorkspace
         ? kXRelationship : kTModel;
     const int maximum = algorithm->xWorkspace ? 2 : 5;
@@ -360,6 +365,24 @@ int boundedIndex(int value, int maximum) {
   return value < 0 ? 0 : (value > maximum ? maximum : value);
 }
 
+void drawInteger(int x, int y, int value) {
+  char text[6];
+  char reversed[4];
+  int count = 0;
+  const bool negative = value < 0;
+  unsigned int magnitude = static_cast<unsigned int>(
+      negative ? -value : value);
+  do {
+    reversed[count++] = static_cast<char>('0' + magnitude % 10);
+    magnitude /= 10;
+  } while (magnitude && count < 4);
+  int position = 0;
+  if (negative) text[position++] = '-';
+  while (count) text[position++] = reversed[--count];
+  text[position] = '\0';
+  NT_drawText(x, y, text);
+}
+
 void drawFrame(bool divider) {
   // Mirror the approved 256 x 64 prototype. The dim frame and divider give
   // the cyan-only display a stable visual hierarchy without competing with
@@ -388,20 +411,45 @@ bool draw(_NT_algorithm* self) {
 
   drawFrame(true);
   if (algorithm->xWorkspace) {
-    NT_drawText(5, 13, "X PITCH");
-    NT_drawText(60, 13, kXRelationships[
+    NT_drawText(5, 13, "X");
+    NT_drawText(18, 13, kXRelationships[
         boundedIndex(self->v[kXRelationship], 2)]);
-    NT_drawText(178, 13, kDejaVuStates[
+    NT_drawText(76, 13, "Scale:");
+    NT_drawText(112, 13, kScaleNames[
+        boundedIndex(self->v[kXScale], 5)]);
+    NT_drawText(190, 13, kDejaVuStates[
         boundedIndex(self->v[kXDejaVu], 2)]);
-    NT_drawText(5, 36, "Spread     Bias       Steps");
-    NT_drawText(5, 55, "hold: Y Spread  Y Bias  Y Steps");
+    NT_drawText(5, 36, "Spread");
+    drawInteger(48, 36, self->v[kXSpread]);
+    NT_drawText(78, 36, "Bias");
+    drawInteger(110, 36, self->v[kXBias]);
+    NT_drawText(137, 36, "Steps");
+    drawInteger(178, 36, self->v[kXSteps]);
+    NT_drawText(5, 55, "hold Y");
+    NT_drawText(46, 55, "Spr");
+    drawInteger(68, 55, self->v[kYSpread]);
+    NT_drawText(96, 55, "Bias");
+    drawInteger(127, 55, self->v[kYBias]);
+    NT_drawText(155, 55, "Steps");
+    drawInteger(196, 55, self->v[kYSteps]);
   } else {
-    NT_drawText(5, 13, "T RHYTHM");
-    NT_drawText(60, 13, kTModels[boundedIndex(self->v[kTModel], 5)]);
-    NT_drawText(178, 13, kDejaVuStates[
+    NT_drawText(5, 13, "T");
+    NT_drawText(18, 13, kTModels[boundedIndex(self->v[kTModel], 5)]);
+    NT_drawText(190, 13, kDejaVuStates[
         boundedIndex(self->v[kTDejaVu], 2)]);
-    NT_drawText(5, 36, "Rate       Bias       Jitter");
-    NT_drawText(5, 55, "hold: Range  Gate Len  Gate Rand");
+    NT_drawText(5, 36, "Rate");
+    drawInteger(40, 36, self->v[kTRate]);
+    NT_drawText(70, 36, "Bias");
+    drawInteger(104, 36, self->v[kTBias]);
+    NT_drawText(135, 36, "Jitter");
+    drawInteger(181, 36, self->v[kTJitter]);
+    NT_drawText(5, 55, "hold");
+    NT_drawText(32, 55, "Range");
+    NT_drawText(72, 55, kRanges[boundedIndex(self->v[kTRange], 2)]);
+    NT_drawText(108, 55, "Len");
+    drawInteger(132, 55, self->v[kTGateLength]);
+    NT_drawText(161, 55, "Rand");
+    drawInteger(194, 55, self->v[kTGateRandomness]);
   }
   return true;
 }

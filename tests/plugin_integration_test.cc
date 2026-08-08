@@ -13,7 +13,14 @@ namespace {
 
 _NT_algorithm* gAlgorithm = nullptr;
 std::vector<int16_t>* gValues = nullptr;
-std::vector<std::string> gDrawnText;
+
+struct DrawnText {
+  int x;
+  int y;
+  std::string text;
+};
+
+std::vector<DrawnText> gDrawnText;
 
 struct DrawnShape {
   _NT_shape shape;
@@ -41,8 +48,17 @@ bool Near(float actual, float expected) {
 }
 
 bool TextDrawn(const char* expected) {
-  return std::find(gDrawnText.begin(), gDrawnText.end(), expected) !=
-      gDrawnText.end();
+  for (const DrawnText& drawn : gDrawnText) {
+    if (drawn.text == expected) return true;
+  }
+  return false;
+}
+
+bool TextDrawnAt(int x, int y, const char* expected) {
+  for (const DrawnText& drawn : gDrawnText) {
+    if (drawn.x == x && drawn.y == y && drawn.text == expected) return true;
+  }
+  return false;
 }
 
 bool ShapeDrawn(_NT_shape shape, int x0, int y0, int x1, int y1,
@@ -275,6 +291,23 @@ bool Different(const std::vector<float>& a, const std::vector<float>& b) {
   return false;
 }
 
+bool OnScale(const std::vector<float>& values, const marbles::Scale& scale) {
+  for (float value : values) {
+    const float pitchClass = value - std::floor(value);
+    bool matched = false;
+    for (int degree = 0; degree < scale.num_degrees; ++degree) {
+      const float distance = std::fabs(
+          pitchClass - scale.degree[degree].voltage);
+      if (distance < 0.0015f || std::fabs(distance - 1.0f) < 0.0015f) {
+        matched = true;
+        break;
+      }
+    }
+    if (!matched) return false;
+  }
+  return true;
+}
+
 float Mean(const std::vector<float>& values) {
   assert(!values.empty());
   float total = 0.0f;
@@ -289,6 +322,7 @@ void TestPitchDefaultsAndRoutes() {
   assert(fixture.values[fixture.parameter("Y Steps")] == 0);
   assert(fixture.values[fixture.parameter("Y Divider")] == 6);
   assert(fixture.values[fixture.parameter("X Scale")] == 0);
+  assert(fixture.values[fixture.parameter("X Steps")] == 75);
   assert(fixture.values[fixture.parameter("X Register CV")] == 0);
   assert(fixture.values[fixture.parameter("Y Output")] == 0);
 
@@ -328,6 +362,8 @@ void TestPitchProcessing() {
   assert(Different(cMajor.x1, cMajor.x3));
   assert(Different(cMajor.x1, cMajor.y));
   assert(Different(cMajor.x1, pelog.x1));
+  assert(OnScale(cMajor.x1, nt_marbles::kFactoryScales[0]));
+  assert(OnScale(pelog.x1, nt_marbles::kFactoryScales[3]));
 
   const PitchRun internalClock = RunPitch(0, 0, false, 0.0f);
   assert(HasRange(internalClock.x1));
@@ -354,11 +390,15 @@ void TestControlSurface() {
 
   ClearDrawCalls();
   assert(fixture.factory->draw(fixture.algorithm));
-  assert(TextDrawn("T RHYTHM"));
+  assert(TextDrawn("T"));
   assert(TextDrawn("Complementary"));
   assert(TextDrawn("Off"));
-  assert(TextDrawn("Rate       Bias       Jitter"));
-  assert(TextDrawn("hold: Range  Gate Len  Gate Rand"));
+  assert(TextDrawn("Rate"));
+  assert(TextDrawn("Jitter"));
+  assert(TextDrawn("Range"));
+  assert(TextDrawnAt(40, 36, "0"));
+  assert(TextDrawnAt(104, 36, "50"));
+  assert(TextDrawnAt(181, 36, "0"));
   assert(ShapeDrawn(kNT_box, 0, 0, 255, 63, 8));
   assert(ShapeDrawn(kNT_line, 4, 18, 252, 18, 8));
 
@@ -377,6 +417,11 @@ void TestControlSurface() {
   ui.pots[2] = 0.72f;
   fixture.factory->customUi(fixture.algorithm, ui);
   assert(fixture.values[fixture.parameter("T Jitter")] == 72);
+  ClearDrawCalls();
+  assert(fixture.factory->draw(fixture.algorithm));
+  assert(TextDrawnAt(40, 36, "-30"));
+  assert(TextDrawnAt(104, 36, "61"));
+  assert(TextDrawnAt(181, 36, "72"));
 
   ui = {};
   ui.controls = kNT_potButtonL | kNT_potL;
@@ -393,6 +438,11 @@ void TestControlSurface() {
   ui.pots[2] = 0.45f;
   fixture.factory->customUi(fixture.algorithm, ui);
   assert(fixture.values[fixture.parameter("T Gate Randomness")] == 45);
+  ClearDrawCalls();
+  assert(fixture.factory->draw(fixture.algorithm));
+  assert(TextDrawnAt(72, 55, "Full"));
+  assert(TextDrawnAt(132, 55, "34"));
+  assert(TextDrawnAt(194, 55, "45"));
 
   const std::vector<int16_t> beforePlainPresses = fixture.values;
   ui = {};
@@ -402,7 +452,6 @@ void TestControlSurface() {
   assert(fixture.values == beforePlainPresses);
 
   ui = {};
-  ui.controls = kNT_encoderR;
   ui.encoders[1] = 1;
   fixture.factory->customUi(fixture.algorithm, ui);
   assert(fixture.values[fixture.parameter("T Model")] == 1);
@@ -413,18 +462,22 @@ void TestControlSurface() {
   ui.lastButtons = kNT_encoderButtonR;
   fixture.factory->customUi(fixture.algorithm, ui);
   assert(fixture.values[fixture.parameter("T Deja Vu")] == 1);
+  ClearDrawCalls();
+  assert(fixture.factory->draw(fixture.algorithm));
+  assert(TextDrawn("Clusters"));
+  assert(TextDrawn("Amount"));
 
   ui = {};
-  ui.controls = kNT_encoderL;
   ui.encoders[0] = 1;
   fixture.factory->customUi(fixture.algorithm, ui);
   ClearDrawCalls();
   assert(fixture.factory->draw(fixture.algorithm));
-  assert(TextDrawn("X PITCH"));
+  assert(TextDrawn("X"));
   assert(TextDrawn("Identical"));
+  assert(TextDrawn("Scale:"));
+  assert(TextDrawn("C major"));
   assert(TextDrawn("Off"));
-  assert(TextDrawn("Spread     Bias       Steps"));
-  assert(TextDrawn("hold: Y Spread  Y Bias  Y Steps"));
+  assert(TextDrawnAt(178, 36, "75"));
 
   ui = {};
   ui.controls = kNT_potL;
@@ -456,9 +509,18 @@ void TestControlSurface() {
   ui.pots[2] = 0.66f;
   fixture.factory->customUi(fixture.algorithm, ui);
   assert(fixture.values[fixture.parameter("Y Steps")] == 66);
+  fixture.values[fixture.parameter("X Scale")] = 3;
+  ClearDrawCalls();
+  assert(fixture.factory->draw(fixture.algorithm));
+  assert(TextDrawn("Pelog"));
+  assert(TextDrawnAt(48, 36, "11"));
+  assert(TextDrawnAt(110, 36, "22"));
+  assert(TextDrawnAt(178, 36, "33"));
+  assert(TextDrawnAt(68, 55, "44"));
+  assert(TextDrawnAt(127, 55, "55"));
+  assert(TextDrawnAt(196, 55, "66"));
 
   ui = {};
-  ui.controls = kNT_encoderR;
   ui.encoders[1] = 1;
   fixture.factory->customUi(fixture.algorithm, ui);
   assert(fixture.values[fixture.parameter("X Relationship")] == 1);
@@ -503,7 +565,6 @@ void TestControlSurface() {
   assert(TextDrawn("MARBLES OVERVIEW"));
 
   ui = {};
-  ui.controls = kNT_encoderL;
   ui.encoders[0] = -1;
   fixture.factory->customUi(fixture.algorithm, ui);
   ui = {};
@@ -564,9 +625,11 @@ extern "C" void NT_setParameterFromUi(uint32_t algorithmIndex,
   (*gValues)[parameter] = value;
 }
 
-extern "C" void NT_drawText(int, int, const char* text, int,
+extern "C" void NT_drawText(int x, int y, const char* text, int,
                              _NT_textAlignment, _NT_textSize) {
-  gDrawnText.push_back(text ? text : "");
+  assert(x >= 0 && x < 256);
+  assert(y >= 0 && y < 64);
+  gDrawnText.push_back({x, y, text ? text : ""});
 }
 
 extern "C" void NT_drawShapeI(_NT_shape shape, int x0, int y0, int x1,

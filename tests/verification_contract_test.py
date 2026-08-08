@@ -71,6 +71,7 @@ for criterion in range(1, 22):
 # Persisted musical defaults match Settings::Init at the pinned revision.
 for declaration in (
     '{"T Rate", -60, 60, 0, kNT_unitSemitones',
+    '{"X Steps", 0, 100, 75, kNT_unitPercent',
     '{"X Range", 0, 2, 2, kNT_unitEnum',
     '{"Y Steps", 0, 100, 0, kNT_unitPercent',
     '{"Y Range", 0, 2, 2, kNT_unitEnum',
@@ -96,7 +97,7 @@ for hardware_exception in ("State::color_blind", "explicit_reset"):
 
 # Every observed host-orchestration departure is retained with reason and an
 # executable or inspectable verification method.
-for departure in ("D-NT-01", "D-NT-02", "D-NT-03", "D-NT-04", "D-NT-05", "D-NT-06"):
+for departure in ("D-NT-01", "D-NT-02", "D-NT-03", "D-NT-04", "D-NT-05", "D-NT-06", "D-NT-07"):
     assert departure in departures, departure
 for required_column in ("Original behavior", "NT adaptation and reason", "Verification method"):
     assert required_column in departures, required_column

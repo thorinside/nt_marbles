@@ -21,10 +21,11 @@ two-row contextual gesture reminder. Buttons 1, 2, and 4 are not claimed by
 the plug-in and remain NT navigation controls.
 
 The custom display uses text at fixed coordinates plus a dim cyan frame and
-header divider within the 256 × 64 NT screen. Each workspace header shows the
-current named T model or X relationship and the current Deja Vu state. The
-remaining rows give the three primary names and their hold alternatives; the
-overview names encoder roles and help.
+header divider within the 256 × 64 NT screen. The T header shows the current
+model and Deja Vu state. The X header shows the current relationship, active
+factory scale, and Deja Vu state. Both parameter rows show live numeric values,
+so every pot movement produces visible feedback while retaining the primary and
+held-role hierarchy. The overview names encoder roles and help.
 
 ## Original-parameter coverage
 
@@ -65,6 +66,13 @@ defaults mirror upstream `Settings::Init`: X and Y Range are Full, Y Steps is
 0%, and Y Divider is 1/8. The upstream-only Markov enum is not exposed because
 the original panel and persisted state constrain T Model to the first six
 choices.
+
+The original X Steps control is a physical pot and therefore has no stored
+power-on value in `Settings::Init`. A new NT instance starts X Steps at 75%,
+above Marbles' unquantized midpoint, so the named factory scale is immediately
+audible. Turning Steps down through 50% returns to the original continuous
+random-voltage behavior. This NT-specific starting value is recorded as
+departure D-NT-07.
 
 `State::color_blind` is a physical-panel LED presentation preference, not a
 musical DSP parameter. Explicit NT labels replace that panel behavior. The

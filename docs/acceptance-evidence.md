@@ -7,9 +7,14 @@ test, supplemental contract checks, ARM inspection, and repository evidence.
 The exact tested commit and object checksum are generated into the release
 bundle by `make package`.
 
-The prior hardware observation is negative evidence for the old object, not
-acceptance of this corrected build. The owner fields below remain pending until
-one final validation session with the exact packaged object.
+Hardware validation has produced two negative observations: the original object
+had a sparse, apparently inactive interface, and the first recovery candidate
+did not respond to real encoder events while its unquantized X Steps midpoint
+made factory-scale behavior difficult to hear. The second finding reopened the
+X/Y, control-surface, and packaging tickets. The encoder event contract, live
+numeric display, visible active scale, and quantized new-instance X Steps value
+now have executable regression coverage. The owner fields below remain pending
+until the rebuilt object passes one final validation session.
 
 | Criterion | Current disposition | Durable evidence | Final owner observation |
 | --- | --- | --- | --- |

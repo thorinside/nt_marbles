@@ -19,11 +19,17 @@ assert 'held[pot] ? xSecondary[pot] : xPrimary[pot]' in source
 assert '"Off", "Amount", "Super-lock"' in source
 assert '{"T Rate", -60, 60, 0, kNT_unitSemitones' in source
 assert '{"T Model", 0, 5, 0, kNT_unitEnum' in source
+assert '{"X Steps", 0, 100, 75, kNT_unitPercent' in source
 assert 'const int maximum = algorithm->xWorkspace ? 2 : 5;' in source
+assert 'if (data.encoders[0] != 0)' in source
+assert 'if (data.encoders[1] != 0)' in source
+assert 'data.controls & kNT_encoderL' not in source
+assert 'data.controls & kNT_encoderR' not in source
 assert 'algorithm->xyGenerator.LoadScale(i, nt_marbles::kFactoryScales[i]);' in source
-assert 'NT_drawText(60, 13, kTModels[' in source
-assert 'NT_drawText(60, 13, kXRelationships[' in source
-assert 'NT_drawText(178, 13, kDejaVuStates[' in source
+assert 'NT_drawText(18, 13, kTModels[' in source
+assert 'NT_drawText(18, 13, kXRelationships[' in source
+assert 'NT_drawText(112, 13, kScaleNames[' in source
+assert 'drawInteger(178, 36, self->v[kXSteps]);' in source
 assert 'NT_drawShapeI(kNT_box, 0, 0, 255, 63, 8);' in source
 assert 'NT_drawShapeI(kNT_line, 4, 18, 252, 18, 8);' in source
 for upstream_value in ("ADC_CHANNEL_T_RATE", "ADC_CHANNEL_X_STEPS", "State::t_model",
