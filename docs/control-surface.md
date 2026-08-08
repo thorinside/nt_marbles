@@ -92,6 +92,26 @@ the corresponding original `TGenerator` and `XYGenerator` setters and
 `GroupSettings`; no route is stored by plug-in serialization (`serialise` and
 `deserialise` are null).
 
+## Host-native preset restoration
+
+The declared `kParameters` array is the complete preset surface: 23 musical
+values, three signal-input routes, and seven output routes. The NT API owns
+`_NT_algorithm::v`, so normal host preset save/reload restores those declared
+values and routes; nt_marbles keeps no duplicate parameter or routing store.
+
+There is currently no demonstrated continuity requirement for serializing
+internal state. On construction, the original-derived random generator is
+initialized to its normal valid starting state and both original generators are
+initialized from it. Reloading therefore starts a fresh, valid Marbles random
+sequence rather than attempting an undocumented partial random-state restore.
+Both custom JSON callbacks remain null until a concrete continuity requirement
+is established and documented.
+
+A route value is never rewritten by the plug-in. At the DSP boundary, 0 and an
+out-of-range value safely disconnect that route; valid saved values are read or
+written exactly as supplied. The NT host governs unavailable saved routes, and
+the plug-in does not substitute a different route.
+
 ### Original output coverage
 
 | Original Marbles output function | Usable NT representation |
