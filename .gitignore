@@ -1,0 +1,4 @@
+build/
+plugins/
+release/
+*.zip
