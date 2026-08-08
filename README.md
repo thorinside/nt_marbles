@@ -33,6 +33,23 @@ the pinned upstream settings data. The pinned checkout itself remains clean.
 The plugin factory GUID is `NT_MULTICHAR('T', 'h', 'M', 'B')`; `Th` reserves
 the owner's thorinside namespace.
 
+## Install
+
+nt_marbles requires disting NT firmware 1.15.0 or later (plug-in API v13).
+Download `nt_marbles-plugin.zip` from the latest GitHub Release and extract it
+at the root of the disting NT MicroSD card. The plug-in object will be installed
+at:
+
+```text
+/programs/plug-ins/nt_marbles.o
+```
+
+Rescan plug-ins or reboot the module, then add **Marbles** to a preset. New
+instances route T1/X1/T2/X2/T3/X3 to physical outputs 3 through 8; Y starts
+disconnected. The complete controls, routing defaults, and NT adaptations are
+documented in [the control-surface guide](docs/control-surface.md) and
+[behavioral departure register](docs/departures.md).
+
 ## Reproduce a build
 
 ```sh
@@ -78,5 +95,5 @@ the host's block partitioning. ARM inspection additionally rejects unresolved
 
 `.github/workflows/build.yml` is the Linux CI path. It checks out recursive
 submodules, builds and inspects the ARM object, and uploads the installable
-MicroSD-layout archive. Tag-triggered releases are intentionally left to a
-future approved release slice.
+MicroSD-layout archive. Pushes of `v*` tags additionally publish that verified
+archive and its SHA-256 file as a GitHub Release.

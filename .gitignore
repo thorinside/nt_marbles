@@ -3,3 +3,4 @@ plugins/
 release/
 *.zip
 *.zip.sha256
+.DS_Store

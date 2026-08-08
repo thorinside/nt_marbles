@@ -4,6 +4,7 @@ on:
   pull_request:
   push:
     branches: [main]
+    tags: ["v*"]
   workflow_dispatch:
 
 permissions:
@@ -16,20 +17,31 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
+          fetch-depth: 0
 
       - name: Install ARM toolchain
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
-            gcc-arm-none-eabi libnewlib-arm-none-eabi libstdc++-arm-none-eabi-dev zip
+            gcc-arm-none-eabi libnewlib-arm-none-eabi libstdc++-arm-none-eabi-dev zip unzip
+
+      - name: Verify ARM toolchain
+        run: |
+          arm-none-eabi-g++ --version
+          arm-none-eabi-nm --version
+          arm-none-eabi-readelf --version
 
       - name: Test, build, inspect, and verify overlay
         run: |
+          make clean
           make test verify-overlay
 
       - name: Package plugin
         run: |
           make ARM_CXX=arm-none-eabi-g++ package
+          arm-none-eabi-size -A plugins/nt_marbles.o
+          unzip -l nt_marbles-plugin.zip
+          shasum -a 256 -c nt_marbles-plugin.zip.sha256
 
       - uses: actions/upload-artifact@v4
         with:
@@ -38,3 +50,23 @@ jobs:
             nt_marbles-plugin.zip
             nt_marbles-plugin.zip.sha256
           if-no-files-found: error
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: nt_marbles-plugin
+          path: dist
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v3
+        with:
+          files: |
+            dist/nt_marbles-plugin.zip
+            dist/nt_marbles-plugin.zip.sha256
+          generate_release_notes: true

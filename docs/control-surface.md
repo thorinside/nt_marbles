@@ -177,13 +177,14 @@ the plug-in does not substitute a different route.
 | X3 random CV | `X3 Output`, independently routable; default physical output 8. |
 | Y related random CV | `Y Output`, independently routable; default disconnected. |
 
-## Review required
+## Validation status
 
 [`control-surface-prototype.svg`](control-surface-prototype.svg) renders the T,
 X, overview, and help screens at their actual 256 × 64 dimensions, including
-the current model/relationship and Deja Vu labels. The corrected interaction is
-ready for owner review, but no final owner approval has been recorded. Review
-the T screen, X screen, overview, all six primary/held pot gestures, plain pot
-presses, Button 3 help, and Buttons 1, 2, and 4 on a 256 × 64 target/emulator;
-then confirm that the names, hierarchy, gestures, and navigation match the
-approved concept.
+the current model/relationship and Deja Vu labels. Automated tests exercise the
+T screen, X screen, overview, all six primary/held pot gestures, plain pot
+presses, Button 3 help, and unclaimed Buttons 1, 2, and 4. Final owner validation
+on physical hardware passed the mapping, hierarchy, pickup behavior, navigation,
+rhythm/pitch output with three oscillators, and preset restoration on
+2026-08-08. See [the acceptance evidence](acceptance-evidence.md) for the exact
+automated and physical evidence boundaries.
