@@ -2,9 +2,8 @@
 
 This is the approved Faceplate-led control contract for the NT interface. It is
 implemented in `src/nt_marbles_plugin.cc` as declared NT parameters, so the
-host saves/restores these values with presets. The DSP adapter has not yet been
-connected; this document deliberately makes no claim that changing a control
-currently changes DSP output.
+host saves/restores these values with presets. The NT boundary scales these
+parameters into the pinned Marbles generators during each audio step.
 
 ## Workspaces and gestures
 
@@ -62,6 +61,48 @@ below are declared normal NT parameters and therefore are host-mappable.
 musical DSP parameter. Explicit NT labels replace that panel behavior. The
 physical module's `explicit_reset` setting is represented in this port by the
 future reset signal route, rather than by a stored knob parameter.
+
+## Signal routing and output coverage
+
+All routing values are declared NT I/O parameters and are therefore saved and
+restored by the host with a preset. `0` is the minimum for every selector and
+means **Disconnected**: the boundary neither reads that input nor writes that
+output. It never replaces a disconnected or unavailable saved route with a
+different bus.
+
+NT bus numbers 1–12 are inputs. Physical NT output *N* is bus `12 + N`, so the
+new-instance routes below leave physical outputs 1 and 2 unused.
+
+| Route | Type | Default | DSP boundary trace |
+| --- | --- | ---: | --- |
+| T Clock | signal input | input 1 | Gate transitions become `stmlib::GateFlags` and drive `TGenerator::Process`. |
+| X Clock | signal input | input 1 | Independently converted to gate transitions and drives `XYGenerator::Process` as its external clock. When disconnected, X uses Marbles’ internal T-normalled clock relationship. |
+| Reset | signal input | input 2 | A rising transition resets both generator calls for that processing block. |
+| T1 Output | CV output | output 3 (bus 15) | Marbles T gate channel 1 → 0 V / 5 V NT signal. |
+| X1 Output | CV output | output 4 (bus 16) | Marbles X voltage channel 1 → NT CV signal. |
+| T2 Output | CV output | output 5 (bus 17) | Marbles master-ramp T gate → 0 V / 5 V NT signal. |
+| X2 Output | CV output | output 6 (bus 18) | Marbles X voltage channel 2 → NT CV signal. |
+| T3 Output | CV output | output 7 (bus 19) | Marbles T gate channel 2 → 0 V / 5 V NT signal. |
+| X3 Output | CV output | output 8 (bus 20) | Marbles X voltage channel 3 → NT CV signal. |
+| Y Output | CV output | disconnected (0) | Marbles Y voltage channel → independently selectable NT CV signal. |
+
+The primary and held controls in the preceding tables are adjustable
+host-mappable parameters. `step()` maps their 0–100 values and named states to
+the corresponding original `TGenerator` and `XYGenerator` setters and
+`GroupSettings`; no route is stored by plug-in serialization (`serialise` and
+`deserialise` are null).
+
+### Original output coverage
+
+| Original Marbles output function | Usable NT representation |
+| --- | --- |
+| T1 rhythm/trigger | `T1 Output`, independently routable; default physical output 3. |
+| T2 rhythm/trigger | `T2 Output`, independently routable; default physical output 5. |
+| T3 rhythm/trigger | `T3 Output`, independently routable; default physical output 7. |
+| X1 random CV | `X1 Output`, independently routable; default physical output 4. |
+| X2 random CV | `X2 Output`, independently routable; default physical output 6. |
+| X3 random CV | `X3 Output`, independently routable; default physical output 8. |
+| Y related random CV | `Y Output`, independently routable; default disconnected. |
 
 ## Review required
 

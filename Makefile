@@ -16,7 +16,14 @@ HOST_SOURCES := src/nt_marbles_plugin.cc
 # These are upstream implementation files, not a curated copy.  Keep this
 # list small and auditable while the host adapter is developed.
 MARBLES_SOURCES := $(UPSTREAM)/marbles/random/t_generator.cc \
-	$(UPSTREAM)/marbles/random/x_y_generator.cc
+	$(UPSTREAM)/marbles/random/x_y_generator.cc \
+	$(UPSTREAM)/marbles/random/output_channel.cc \
+	$(UPSTREAM)/marbles/random/quantizer.cc \
+	$(UPSTREAM)/marbles/random/discrete_distribution_quantizer.cc \
+	$(UPSTREAM)/marbles/random/lag_processor.cc \
+	$(UPSTREAM)/marbles/ramp/ramp_extractor.cc \
+	$(UPSTREAM)/marbles/resources.cc \
+	$(UPSTREAM)/stmlib/dsp/units.cc
 HOST_OBJECTS := $(patsubst src/%.cc,$(BUILD)/host/%.o,$(HOST_SOURCES))
 MARBLES_OBJECTS := $(patsubst $(UPSTREAM)/%.cc,$(BUILD)/upstream/%.o,$(MARBLES_SOURCES))
 
@@ -28,7 +35,8 @@ $(TARGET): $(HOST_OBJECTS) $(MARBLES_OBJECTS)
 
 $(BUILD)/host/%.o: src/%.cc
 	@mkdir -p $(@D)
-	$(ARM_CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
+	# Host boundary includes pinned upstream headers with intentional unused args.
+	$(ARM_CXX) $(MARBLES_CXXFLAGS) $(INCLUDES) -c $< -o $@
 
 $(BUILD)/upstream/%.o: $(UPSTREAM)/%.cc
 	@mkdir -p $(@D)
