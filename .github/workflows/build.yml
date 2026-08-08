@@ -23,18 +23,18 @@ jobs:
           sudo apt-get install -y --no-install-recommends \
             gcc-arm-none-eabi libnewlib-arm-none-eabi libstdc++-arm-none-eabi-dev zip
 
-      - name: Build, inspect, and verify overlay
+      - name: Test, build, inspect, and verify overlay
         run: |
-          make ARM_CXX=arm-none-eabi-g++ inspect verify-overlay
+          make test verify-overlay
 
       - name: Package plugin
         run: |
-          mkdir -p release/programs/plug-ins
-          cp plugins/nt_marbles.o release/programs/plug-ins/
-          (cd release && zip -r ../nt_marbles-plugin.zip programs)
+          make ARM_CXX=arm-none-eabi-g++ package
 
       - uses: actions/upload-artifact@v4
         with:
           name: nt_marbles-plugin
-          path: nt_marbles-plugin.zip
+          path: |
+            nt_marbles-plugin.zip
+            nt_marbles-plugin.zip.sha256
           if-no-files-found: error

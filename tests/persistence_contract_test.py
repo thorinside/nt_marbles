@@ -11,9 +11,9 @@ api = Path("third_party/distingNT_API/include/distingnt/api.h").read_text()
 # the sole preset surface rather than a plug-in-maintained shadow copy.
 parameter_block = source.split("const _NT_parameter kParameters[] = {", 1)[1].split("};", 1)[0]
 assert parameter_block.count('{"') == 23
-assert parameter_block.count("NT_PARAMETER_CV_INPUT") == 3
+assert parameter_block.count("NT_PARAMETER_CV_INPUT") == 4
 assert parameter_block.count("NT_PARAMETER_CV_OUTPUT") == 7
-assert "kYRoute, kParameterCount" in source
+assert "kXRegisterCvRoute, kParameterCount" in source
 assert "requirements.numParameters = kParameterCount" in source
 assert "const int16_t*\t\t\t\tv;\t\t\t\t\t// Pointer to the algorithm's parameter values. Managed by the system." in api
 

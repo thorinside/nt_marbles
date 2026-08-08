@@ -14,16 +14,17 @@ parameters into the pinned Marbles generators during each audio step.
 
 A plain pot press has no action. The left encoder selects T or X and its press
 toggles the overview. The right encoder selects **T Model** (Complementary,
-Clusters, Drums, Independent, Divider, Three states, Markov) or **X
+Clusters, Drums, Independent, Divider, Three states) or **X
 Relationship** (Identical, Bump, Tilt); its press cycles the relevant Deja Vu
 state: **Off**, **Amount**, **Super-lock**. Button 3, while held, presents a
 two-row contextual gesture reminder. Buttons 1, 2, and 4 are not claimed by
 the plug-in and remain NT navigation controls.
 
-The custom display has only text at fixed coordinates within the 256 × 64 NT
-screen and uses the API default cyan shade. Its workspace screen gives the
-three primary names and their hold alternatives; the overview names encoder
-roles and help.
+The custom display uses text at fixed coordinates plus a dim cyan frame and
+header divider within the 256 × 64 NT screen. Each workspace header shows the
+current named T model or X relationship and the current Deja Vu state. The
+remaining rows give the three primary names and their hold alternatives; the
+overview names encoder roles and help.
 
 ## Original-parameter coverage
 
@@ -57,6 +58,14 @@ below are declared normal NT parameters and therefore are host-mappable.
 | `State::y_divider` | Y Divider |
 | `State::y_range` | Y Range |
 
+`T Rate` is the original calibrated −60…+60-semitone generator value, with 0
+at the center. The six `X Scale` choices load the exact pinned factory tables:
+C major, C minor, Pentatonic, Pelog, Raag Bhairav That, and Raag Shri. Persisted
+defaults mirror upstream `Settings::Init`: X and Y Range are Full, Y Steps is
+0%, and Y Divider is 1/8. The upstream-only Markov enum is not exposed because
+the original panel and persisted state constrain T Model to the first six
+choices.
+
 `State::color_blind` is a physical-panel LED presentation preference, not a
 musical DSP parameter. Explicit NT labels replace that panel behavior. The
 physical module's `explicit_reset` setting is adapted to the actual `Reset`
@@ -79,6 +88,7 @@ new-instance routes below leave physical outputs 1 and 2 unused.
 | T Clock | signal input | input 1 | Gate transitions become `stmlib::GateFlags` and drive `TGenerator::Process`. |
 | X Clock | signal input | input 1 | Independently converted to gate transitions and drives `XYGenerator::Process` as its external clock. When disconnected, X uses Marbles’ internal T-normalled clock relationship. |
 | Reset | signal input | input 2 | A rising transition resets both generator calls for that processing block. |
+| X Register CV | signal input | disconnected (0) | When X Register is On, −5…+5 V is clamped to the original 0…1 note range and passed through the pinned Marbles note filter before `XYGenerator::Process`. |
 | T1 Output | CV output | output 3 (bus 15) | Marbles T gate channel 1 → 0 V / 5 V NT signal. |
 | X1 Output | CV output | output 4 (bus 16) | Marbles X voltage channel 1 → NT CV signal. |
 | T2 Output | CV output | output 5 (bus 17) | Marbles master-ramp T gate → 0 V / 5 V NT signal. |
@@ -88,15 +98,17 @@ new-instance routes below leave physical outputs 1 and 2 unused.
 | Y Output | CV output | disconnected (0) | Marbles Y voltage channel → independently selectable NT CV signal. |
 
 The primary and held controls in the preceding tables are adjustable
-host-mappable parameters. `step()` maps their 0–100 values and named states to
-the corresponding original `TGenerator` and `XYGenerator` setters and
-`GroupSettings`; no route is stored by plug-in serialization (`serialise` and
-`deserialise` are null).
+host-mappable parameters. `step()` maps T Rate to the original semitone value
+and maps remaining percentages and named states to the corresponding original
+`TGenerator` and `XYGenerator` setters and `GroupSettings`. T1/T3 are
+deinterleaved from the two-channel gate frames; X1/X2/X3/Y are deinterleaved
+from the four-channel voltage frames. No route is stored by plug-in
+serialization (`serialise` and `deserialise` are null).
 
 ## Host-native preset restoration
 
 The declared `kParameters` array is the complete preset surface: 23 musical
-values, three signal-input routes, and seven output routes. The NT API owns
+values, four signal-input routes, and seven output routes. The NT API owns
 `_NT_algorithm::v`, so normal host preset save/reload restores those declared
 values and routes; nt_marbles keeps no duplicate parameter or routing store.
 
@@ -128,7 +140,10 @@ the plug-in does not substitute a different route.
 ## Review required
 
 [`control-surface-prototype.svg`](control-surface-prototype.svg) renders the T,
-X, overview, and help screens at their actual 256 × 64 dimensions. The rendered interaction is ready for an owner review, but no owner approval
-has been recorded. Review the T screen, X screen, overview, and held Button 3
-help on a 256 × 64 target/emulator; then confirm that the names, hierarchy, and
-hold gesture match the approved concept.
+X, overview, and help screens at their actual 256 × 64 dimensions, including
+the current model/relationship and Deja Vu labels. The corrected interaction is
+ready for owner review, but no final owner approval has been recorded. Review
+the T screen, X screen, overview, all six primary/held pot gestures, plain pot
+presses, Button 3 help, and Buttons 1, 2, and 4 on a 256 × 64 target/emulator;
+then confirm that the names, hierarchy, gestures, and navigation match the
+approved concept.

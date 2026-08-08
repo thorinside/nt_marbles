@@ -1,9 +1,9 @@
 # nt_marbles
 
-A disting NT port of Mutable Instruments Marbles. This repository is in the
-early implementation: it establishes the reproducible original-source build, a
-strict boundary between upstream DSP and the disting NT host adapter, and the
-approved T/X control-surface contract. See [the control-surface guide](docs/control-surface.md).
+A disting NT port of Mutable Instruments Marbles. It compiles the pinned
+original generators, loads the original factory scales, and adapts their
+interleaved signals to a tested disting NT host boundary and the approved T/X
+control surface. See [the control-surface guide](docs/control-surface.md).
 
 ## Provenance and licensing
 
@@ -22,11 +22,12 @@ The disting NT API headers are a separate read-only submodule:
 - repository: <https://github.com/expertsleepersltd/distingNT_API>
 - revision: `f440d20c2a96a9ca43892c7418a1d8185ad47eb5` (API v13)
 
-`src/nt_marbles_plugin.cc` is the NT-only boundary and declares the T/X
-control surface as host-managed parameters. `src/marbles_dsp/` is the only
-location for the future adapter; it compiles original generator units straight
-from `third_party/eurorack`, as listed in the Makefile. No upstream algorithm
-files are copied or edited here.
+`src/nt_marbles_plugin.cc` is the NT-only adapter and declares the T/X control
+surface as host-managed parameters. Its small pure conversion helpers live in
+`src/nt_marbles_host_boundary.h`; it compiles original generator units straight
+from `third_party/eurorack`, as listed in the Makefile. The immutable factory
+scale table in `src/marbles_factory_scales.h` is automatically compared with
+the pinned upstream settings data. No upstream algorithm file is edited here.
 
 The plugin factory GUID is `NT_MULTICHAR('T', 'h', 'M', 'B')`; `Th` reserves
 the owner's thorinside namespace.
@@ -43,6 +44,10 @@ make ARM_CXX=arm-none-eabi-g++ inspect
 The output is `plugins/nt_marbles.o`, an ARM relocatable disting NT plugin
 object. `make inspect` confirms that it is an ARM ELF object and exports
 `pluginEntry`.
+
+`make package` creates `nt_marbles-plugin.zip` in the installable MicroSD
+layout, includes the exact source commit, object checksum, and third-party
+notices, and writes `nt_marbles-plugin.zip.sha256` beside it.
 
 ## Compatibility overlay
 
