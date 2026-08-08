@@ -52,6 +52,55 @@ index 69db2b8..635c289 100644
 +  void Init(float max_frequency, float sample_rate);
 @@ -137,0 +138 @@ class RampExtractor {
 +  float sample_rate_;
+diff --git a/marbles/random/output_channel.cc b/marbles/random/output_channel.cc
+index 40d10c2..44827a6 100644
+--- a/marbles/random/output_channel.cc
++++ b/marbles/random/output_channel.cc
+@@ -42 +42 @@ using namespace stmlib;
+-const size_t kNumReacquisitions = 20; // 6.4 samples per millisecond
++const float kReacquisitionDuration = 100.0f / 32000.0f;
+@@ -44 +44 @@ const size_t kNumReacquisitions = 20; // 6.4 samples per millisecond
+-void OutputChannel::Init() {
++void OutputChannel::Init(float sample_rate) {
+@@ -56 +56,3 @@ void OutputChannel::Init() {
+-  reacquisition_counter_ = 0;
++  reacquisition_samples_remaining_ = 0;
++  reacquisition_window_samples_ = static_cast<uint32_t>(
++      sample_rate * kReacquisitionDuration + 0.5f);
+@@ -100,0 +103,2 @@ void OutputChannel::Process(
++  const size_t block_size = size;
++  bool started_reacquisition = false;
+@@ -115,2 +119,2 @@ void OutputChannel::Process(
+-  if (reacquisition_counter_) {
+-    --reacquisition_counter_;
++  const bool was_reacquiring = reacquisition_samples_remaining_ != 0;
++  if (was_reacquiring) {
+@@ -130 +134,2 @@ void OutputChannel::Process(
+-        reacquisition_counter_ = kNumReacquisitions;
++        reacquisition_samples_remaining_ = reacquisition_window_samples_;
++        started_reacquisition = true;
+@@ -142,0 +148,6 @@ void OutputChannel::Process(
++  if (was_reacquiring && !started_reacquisition) {
++    reacquisition_samples_remaining_ =
++        reacquisition_samples_remaining_ > block_size
++            ? reacquisition_samples_remaining_ - block_size
++            : 0;
++  }
+@@ -145 +156 @@ void OutputChannel::Process(
+-}  // namespace marbles
+\ No newline at end of file
++}  // namespace marbles
+diff --git a/marbles/random/output_channel.h b/marbles/random/output_channel.h
+index 7c85016..46c2c70 100644
+--- a/marbles/random/output_channel.h
++++ b/marbles/random/output_channel.h
+@@ -59 +59 @@ class OutputChannel {
+-  void Init();
++  void Init(float sample_rate);
+@@ -122 +122,2 @@ class OutputChannel {
+-  uint32_t reacquisition_counter_;
++  uint32_t reacquisition_samples_remaining_;
++  uint32_t reacquisition_window_samples_;
 diff --git a/marbles/random/t_generator.cc b/marbles/random/t_generator.cc
 index 7d80751..67fa865 100644
 --- a/marbles/random/t_generator.cc
@@ -60,13 +109,47 @@ index 7d80751..67fa865 100644
 -  ramp_extractor_.Init(1000.0f / sr);
 +  ramp_extractor_.Init(1000.0f / sr, sr);
 diff --git a/marbles/random/x_y_generator.cc b/marbles/random/x_y_generator.cc
-index dd1b108..2301791 100644
+index dd1b108..3c37a06 100644
 --- a/marbles/random/x_y_generator.cc
 +++ b/marbles/random/x_y_generator.cc
+@@ -43 +43 @@ void XYGenerator::Init(RandomStream* random_stream, float sr) {
+-    output_channel_[i].Init();
++    output_channel_[i].Init(sr);
 @@ -45 +45 @@ void XYGenerator::Init(RandomStream* random_stream, float sr) {
 -  ramp_extractor_.Init(8000.0f / sr);
 +  ramp_extractor_.Init(8000.0f / sr, sr);
-@@ -207 +207 @@ void XYGenerator::Process(
+@@ -47 +47,4 @@ void XYGenerator::Init(RandomStream* random_stream, float sr) {
+-  external_clock_stabilization_counter_ = 16;
++  external_clock_stabilization_window_samples_ = static_cast<uint32_t>(
++      sr * (80.0f / 32000.0f) + 0.5f);
++  external_clock_stabilization_samples_remaining_ =
++      external_clock_stabilization_window_samples_;
+@@ -73 +76,2 @@ void XYGenerator::Process(
+-    external_clock_stabilization_counter_ = 16;
++    external_clock_stabilization_samples_remaining_ =
++        external_clock_stabilization_window_samples_;
+@@ -75,3 +79,3 @@ void XYGenerator::Process(
+-    if (external_clock_stabilization_counter_) {
+-      --external_clock_stabilization_counter_;
+-      if (external_clock_stabilization_counter_ == 0) {
++    if (external_clock_stabilization_samples_remaining_) {
++      if (external_clock_stabilization_samples_remaining_ <= size) {
++        external_clock_stabilization_samples_remaining_ = 0;
+@@ -78,0 +83,2 @@ void XYGenerator::Process(
++      } else {
++        external_clock_stabilization_samples_remaining_ -= size;
+@@ -89 +95 @@ void XYGenerator::Process(
+-        if (external_clock_stabilization_counter_) {
++        if (external_clock_stabilization_samples_remaining_) {
+@@ -207 +213 @@ void XYGenerator::Process(
 -}  // namespace marbles
 \ No newline at end of file
 +}  // namespace marbles
+diff --git a/marbles/random/x_y_generator.h b/marbles/random/x_y_generator.h
+index c41a09b..e6cf994 100644
+--- a/marbles/random/x_y_generator.h
++++ b/marbles/random/x_y_generator.h
+@@ -137 +137,2 @@ class XYGenerator {
+-  int external_clock_stabilization_counter_;
++  uint32_t external_clock_stabilization_samples_remaining_;
++  uint32_t external_clock_stabilization_window_samples_;

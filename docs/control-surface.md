@@ -136,10 +136,13 @@ route is stored by plug-in serialization (`serialise` and `deserialise` are
 null).
 
 The original generators are called at the same elapsed-time control cadence as
-their five-frame/32 kHz hardware blocks. A removable overlay also converts the
-clock extractor's 32 kHz time constants to the active NT sample rate. The
-engine matrix executes the real factory at 32, 44.1, 48, 88.2, and 96 kHz and
-at 4-, 24-, and 256-frame host blocks.
+their five-frame/32 kHz hardware blocks. A continuous fractional scheduler
+crosses host-call boundaries (for example, alternating 7 and 8 frames at 48
+kHz) instead of restarting at each NT block. A removable overlay also converts
+the clock extractor, register reacquisition, and X-clock stabilization timing
+to elapsed samples. The engine matrix executes the real factory at 32, 44.1,
+48, 88.2, and 96 kHz and at 4-, 24-, 64-, and 256-frame host blocks; a boundary
+test proves every configuration preserves 6,400 control intervals per second.
 
 ## Host-native preset restoration
 

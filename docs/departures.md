@@ -19,6 +19,7 @@ boundary adaptations, not hidden changes to that source.
 
 The compatibility overlay contains one non-musical portability correction:
 `0001-sample-rate-aware-ramp-extractor.patch` converts the extractor's fixed
-32 kHz time constants to the active sample rate. It does not alter the musical
-model. Normal builds patch a staging copy; `make verify-overlay` also proves
-the patch applies/removes cleanly against the pinned checkout.
+32 kHz time constants and the original register-reacquisition/X-clock call
+counters to elapsed samples at the active rate. It does not alter the musical
+model. Normal builds patch a staging copy; `make verify-overlay` also proves the
+patch applies/removes cleanly against the pinned checkout.

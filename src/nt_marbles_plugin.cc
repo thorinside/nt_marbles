@@ -139,7 +139,9 @@ struct NtMarblesAlgorithm : _NT_algorithm {
   marbles::NoteFilter noteFilter;
   float registerValue;
   int maxFrames;
-  int controlFrames;
+  int sampleRate;
+  int controlRemainder;
+  int framesUntilControl;
   int potTarget[3];
   float potPosition[3];
   bool potPickupLocked[3];
@@ -239,8 +241,10 @@ _NT_algorithm* construct(const _NT_algorithmMemoryPtrs& pointers,
   }
   const uint32_t frames = NT_globals.maxFramesPerStep;
   algorithm->maxFrames = static_cast<int>(frames);
-  algorithm->controlFrames = nt_marbles::ControlBlockFrames(
-      static_cast<float>(NT_globals.sampleRate));
+  algorithm->sampleRate = NT_globals.sampleRate;
+  algorithm->controlRemainder = 0;
+  algorithm->framesUntilControl = nt_marbles::NextControlIntervalFrames(
+      algorithm->sampleRate, &algorithm->controlRemainder);
   algorithm->ramps = reinterpret_cast<float*>(pointers.dtc);
   algorithm->voltages = algorithm->ramps + 4 * frames;
   algorithm->clocks = reinterpret_cast<stmlib::GateFlags*>(algorithm->voltages + 4 * frames);
@@ -323,10 +327,11 @@ void step(_NT_algorithm* self, float* busFrames, int numFramesBy4) {
       algorithm->ramps, algorithm->ramps + scratchStride,
       {algorithm->ramps + 2 * scratchStride,
        algorithm->ramps + 3 * scratchStride}};
-  for (int offset = 0; offset < frames; offset += algorithm->controlFrames) {
+  for (int offset = 0; offset < frames;) {
     const int remaining = frames - offset;
-    const int chunk = remaining < algorithm->controlFrames
-        ? remaining : algorithm->controlFrames;
+    const int chunk = remaining < algorithm->framesUntilControl
+        ? remaining : algorithm->framesUntilControl;
+    const bool controlBoundary = chunk == algorithm->framesUntilControl;
     bool didReset = false;
     if (reset) {
       for (int i = 0; i < chunk; ++i) {
@@ -339,11 +344,13 @@ void step(_NT_algorithm* self, float* busFrames, int numFramesBy4) {
       algorithm->previousReset = stmlib::GATE_FLAG_LOW;
     }
 
-    const float registerInput = registerCv
-        ? nt_marbles::RegisterValueFromVolts(
-              registerCv[offset + chunk - 1])
-        : 0.5f;
-    algorithm->registerValue = algorithm->noteFilter.Process(registerInput);
+    if (controlBoundary) {
+      const float registerInput = registerCv
+          ? nt_marbles::RegisterValueFromVolts(
+                registerCv[offset + chunk - 1])
+          : 0.5f;
+      algorithm->registerValue = algorithm->noteFilter.Process(registerInput);
+    }
     x.register_value = registerCv ? algorithm->registerValue : 0.5f;
 
     algorithm->tGenerator.Process(
@@ -383,6 +390,12 @@ void step(_NT_algorithm* self, float* busFrames, int numFramesBy4) {
                 algorithm->voltages + 2, 4, chunk);
     writeOutput(self, kYRoute, kYMode, busFrames + offset, frames,
                 algorithm->voltages + 3, 4, chunk);
+    offset += chunk;
+    algorithm->framesUntilControl -= chunk;
+    if (algorithm->framesUntilControl == 0) {
+      algorithm->framesUntilControl = nt_marbles::NextControlIntervalFrames(
+          algorithm->sampleRate, &algorithm->controlRemainder);
+    }
   }
 }
 

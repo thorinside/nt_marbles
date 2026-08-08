@@ -2,7 +2,8 @@
 
 Audit date: 2026-08-08
 Audited implementation: `17d47c03e5bc0808fb54cba7abde4d9b79a947f2`
-Remediation: implemented in the candidate immediately following that baseline
+Remediation: implemented in the current candidate lineage; exact identity is
+recorded in the acceptance evidence
 Scope: the current Expert Sleepers disting NT manual and C++ API, the Mutable
 Instruments Marbles printed and web manuals, the final first-party Marbles
 source, and this repository's implementation, documentation, and tests.
@@ -28,7 +29,7 @@ automated remediation is not a substitute for that observation.
 
 | Finding | Candidate disposition |
 | --- | --- |
-| F-01 | Fixed: the NT boundary processes elapsed-time-equivalent control chunks, and a reproducible upstream overlay makes `RampExtractor` sample-rate aware. Internal/external clock, range/rate, register, and parameter-effect tests run across 32/44.1/48/88.2/96 kHz and 4/24/64/256-frame configurations. |
+| F-01 | Fixed: a continuous fractional scheduler preserves 6,400 control boundaries per second across host calls, including blocks smaller than one control interval. The reproducible upstream overlay makes `RampExtractor`, register reacquisition, and X external-clock stabilization elapsed-sample based. Internal/external clock, range/rate, register, and parameter-effect tests run across 32/44.1/48/88.2/96 kHz and 4/24/64/256-frame configurations. |
 | F-02 | Fixed in code: target-aware pickup locks each pot whenever T/X or primary/held selection changes and unlocks only when the physical position crosses the destination value. All twelve transitions have executable coverage; physical ergonomics remain in the final owner pass. |
 | F-03 | Fixed: T Range uses three equal travel regions with boundary tests. |
 | F-04 | Fixed: all seven outputs have appended Add/Replace parameters, defaulting to Add without shifting any existing musical or routing parameter index. Shared-bus behavior is tested. |

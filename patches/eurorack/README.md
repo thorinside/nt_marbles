@@ -3,8 +3,10 @@ verify that they round-trip against the exact clean pinned revision.
 
 `0001-sample-rate-aware-ramp-extractor.patch` converts the pinned extractor's
 32 kHz time constants into sample-rate-aware values and threads the active
-sample rate through its initialization. The host adapter separately preserves
-the original control-call cadence.
+sample rate through its initialization. It also converts register reacquisition
+and X external-clock stabilization from call counters to elapsed-sample
+windows, so small host blocks cannot shorten them. The host adapter preserves
+the fractional original control cadence continuously across host calls.
 
 `scripts/prepare-eurorack-overlay.sh` copies the required upstream trees under
 `build/eurorack-overlay/` and applies this ordered patch set there. Normal

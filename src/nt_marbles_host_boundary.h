@@ -1,6 +1,8 @@
 #ifndef NT_MARBLES_HOST_BOUNDARY_H_
 #define NT_MARBLES_HOST_BOUNDARY_H_
 
+#include <cstdint>
+
 namespace nt_marbles {
 
 inline float Clamp(float value, float minimum, float maximum) {
@@ -21,11 +23,15 @@ inline int TRangeFromPot(float normalized) {
   return range > 2 ? 2 : range;
 }
 
-inline int ControlBlockFrames(float sampleRate) {
-  // Marbles runs its five-frame render block at 32 kHz. Preserve that
-  // control-call cadence when the NT runs at another sample rate.
-  const int frames = static_cast<int>(sampleRate * (5.0f / 32000.0f) + 0.5f);
-  return frames < 1 ? 1 : frames;
+inline int NextControlIntervalFrames(int sampleRate, int* remainder) {
+  // Marbles runs its five-frame render block at 32 kHz. Bresenham-style
+  // intervals preserve that elapsed cadence exactly on average at NT sample
+  // rates where the equivalent frame count is fractional (48 kHz: 7, 8...).
+  const int64_t total = static_cast<int64_t>(sampleRate) * 5 + *remainder;
+  int frames = static_cast<int>(total / 32000);
+  *remainder = static_cast<int>(total % 32000);
+  if (frames < 1) frames = 1;
+  return frames;
 }
 
 inline float RegisterValueFromVolts(float volts) {

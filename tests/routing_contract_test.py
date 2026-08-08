@@ -37,7 +37,8 @@ for statement in (
 assert "algorithm->gates, i, 0, 2)" in source
 assert "algorithm->gates, i, 1, 2)" in source
 assert "registerCv[offset + chunk - 1]" in source
-assert "algorithm->controlFrames" in source
+assert "algorithm->framesUntilControl" in source
+assert "NextControlIntervalFrames" in source
 assert "if (self->v[mode]) destination[i] = sample" in source
 assert "else destination[i] += sample" in source
 for section in ("Signal routing and output coverage", "Original output coverage"):

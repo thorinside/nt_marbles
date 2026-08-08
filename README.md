@@ -54,7 +54,7 @@ notices, and writes `nt_marbles-plugin.zip.sha256` beside it.
 
 Compatibility changes are deliberately outside the submodule in ordered
 `patches/eurorack/*.patch` files. The current overlay makes the upstream clock
-extractor's time constants sample-rate aware. `make` runs
+extractor and remaining call-count timing windows sample-rate aware. `make` runs
 `scripts/prepare-eurorack-overlay.sh` and compiles `build/eurorack-overlay`,
 leaving the pinned checkout untouched. These verification commands are safe
 when the upstream checkout is clean:
@@ -69,7 +69,9 @@ make verify-overlay
 The verification path uses `git apply` and reverse `git apply`; neither command
 commits to or changes the pinned submodule after removal. `make test` also runs
 the real factory across all five documented NT sample rates and representative
-4-, 24-, and 256-frame blocks.
+4-, 24-, 64-, and 256-frame blocks. A continuous fractional control scheduler
+also proves the original 6,400 control boundaries per second are independent of
+the host's block partitioning.
 
 ## Build automation
 

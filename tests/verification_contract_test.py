@@ -46,8 +46,13 @@ for unit in (
 ):
     assert f"$(OVERLAY)/{unit}" in makefile, unit
 assert "scripts/prepare-eurorack-overlay.sh" in makefile
+patch = (root / "patches/eurorack/0001-sample-rate-aware-ramp-extractor.patch").read_text()
 assert "0001-sample-rate-aware-ramp-extractor.patch" in \
        (root / "patches/eurorack/README.md").read_text()
+assert "reacquisition_samples_remaining_" in patch
+assert "external_clock_stabilization_samples_remaining_" in patch
+assert "\n+  uint32_t reacquisition_counter_" not in patch
+assert "\n+  int external_clock_stabilization_counter_" not in patch
 assert "third_party/eurorack" in source
 assert "#include \"marbles/random/t_generator.h\"" in source
 assert "#include \"marbles/random/x_y_generator.h\"" in source
