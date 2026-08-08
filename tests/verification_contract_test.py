@@ -12,6 +12,7 @@ makefile = (root / "Makefile").read_text()
 factory_scales = (root / "src/marbles_factory_scales.h").read_text()
 workflow = (root / ".github/workflows/build.yml").read_text()
 notices = (root / "THIRD_PARTY_NOTICES.md").read_text()
+license_text = (root / "LICENSE").read_text()
 evidence = (root / "docs/acceptance-evidence.md").read_text()
 
 
@@ -69,6 +70,14 @@ assert "xyGenerator.LoadScale(i, nt_marbles::kFactoryScales[i])" in source
 for holder in ("Copyright 2015 Emilie Gillet", "Copyright 2012 Emilie Gillet",
                "Copyright 2025 Expert Sleepers Ltd"):
     assert holder in notices, holder
+for license_claim in (
+    "MIT License",
+    "Copyright (c) 2026 Neal Sanche",
+    "Permission is hereby granted, free of charge",
+):
+    assert license_claim in license_text, license_claim
+assert "[MIT License](LICENSE)" in (root / "README.md").read_text()
+assert "cp LICENSE release/licenses/nt_marbles-LICENSE.txt" in makefile
 assert "make test verify-overlay" in workflow
 assert "make ARM_CXX=arm-none-eabi-g++ package" in workflow
 assert "BUILD_COMMIT.txt" in makefile

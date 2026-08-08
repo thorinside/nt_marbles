@@ -66,6 +66,7 @@ inspect: $(TARGET)
 package: inspect
 	@mkdir -p release/programs/plug-ins release/licenses
 	cp $(TARGET) release/programs/plug-ins/
+	cp LICENSE release/licenses/nt_marbles-LICENSE.txt
 	cp THIRD_PARTY_NOTICES.md release/licenses/
 	@git rev-parse HEAD > release/BUILD_COMMIT.txt
 	@shasum -a 256 $(TARGET) > release/PLUGIN_SHA256.txt

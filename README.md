@@ -7,6 +7,12 @@ control surface. See [the control-surface guide](docs/control-surface.md).
 
 ## Provenance and licensing
 
+The nt_marbles adapter, build scripts, tests, and documentation are released
+under the [MIT License](LICENSE), copyright 2026 Neal Sanche. Bundled
+third-party code remains under its respective license; those notices are
+retained in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) and in every
+release archive.
+
 The Marbles implementation reference is the read-only Git submodule
 [`third_party/eurorack`](third_party/eurorack), pinned to:
 
@@ -64,8 +70,9 @@ object. `make inspect` confirms that it is an ARM ELF object and exports
 `pluginEntry`.
 
 `make package` creates `nt_marbles-plugin.zip` in the installable MicroSD
-layout, includes the exact source commit, object checksum, and third-party
-notices, and writes `nt_marbles-plugin.zip.sha256` beside it.
+layout, includes the exact source commit, object checksum, nt_marbles MIT
+license, and third-party notices, and writes `nt_marbles-plugin.zip.sha256`
+beside it.
 
 ## Compatibility overlay
 
