@@ -59,8 +59,9 @@ below are declared normal NT parameters and therefore are host-mappable.
 
 `State::color_blind` is a physical-panel LED presentation preference, not a
 musical DSP parameter. Explicit NT labels replace that panel behavior. The
-physical module's `explicit_reset` setting is represented in this port by the
-future reset signal route, rather than by a stored knob parameter.
+physical module's `explicit_reset` setting is adapted to the actual `Reset`
+signal route rather than a stored knob parameter. Its intentionally different
+NT semantics are recorded in [the departure register](departures.md).
 
 ## Signal routing and output coverage
 

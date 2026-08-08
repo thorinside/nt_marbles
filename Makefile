@@ -55,6 +55,7 @@ test:
 	python3 tests/control_surface_test.py
 	python3 tests/routing_contract_test.py
 	python3 tests/persistence_contract_test.py
+	python3 tests/verification_contract_test.py
 
 clean:
 	rm -rf $(BUILD) plugins release nt_marbles-plugin.zip
