@@ -34,7 +34,8 @@ const char* const kDejaVuStates[] = {"Off", "Amount", "Super-lock"};
 const char* const kTModels[] = {"Complementary", "Clusters", "Drums",
                                 "Independent", "Divider", "Three states"};
 const char* const kXRelationships[] = {"Identical", "Bump", "Tilt"};
-const char* const kRanges[] = {"Narrow", "Positive", "Full"};
+const char* const kTRanges[] = {"1/4x", "1x", "4x"};
+const char* const kXYRanges[] = {"Narrow", "Positive", "Full"};
 const char* const kOffOn[] = {"Off", "On"};
 const char* const kScaleNames[] = {"C major", "C minor", "Pentatonic",
                                    "Pelog", "Raag Bhairav", "Raag Shri"};
@@ -46,10 +47,14 @@ const marbles::Ratio kYDividerRatios[] = {
 };
 
 const _NT_parameter kParameters[] = {
-    {"T Rate", -60, 60, 0, kNT_unitSemitones, 0, nullptr},
+    // The DSP consumes an exponential -60..+60 coordinate, but that is not a
+    // pitch and must not be presented to the user as semitones. Keep the
+    // internal/preset-compatible domain and format it as the physical knob's
+    // normalized percentage through parameterString().
+    {"T Rate", -60, 60, 0, kNT_unitHasStrings, 0, nullptr},
     {"T Bias", 0, 100, 50, kNT_unitPercent, 0, nullptr},
     {"T Jitter", 0, 100, 0, kNT_unitPercent, 0, nullptr},
-    {"T Range", 0, 2, 1, kNT_unitEnum, 0, kRanges},
+    {"T Range", 0, 2, 1, kNT_unitEnum, 0, kTRanges},
     {"T Gate Length", 0, 100, 50, kNT_unitPercent, 0, nullptr},
     {"T Gate Randomness", 0, 100, 0, kNT_unitPercent, 0, nullptr},
     {"T Model", 0, 5, 0, kNT_unitEnum, 0, kTModels},
@@ -67,10 +72,10 @@ const _NT_parameter kParameters[] = {
     {"X Deja Vu", 0, 2, 0, kNT_unitEnum, 0, kDejaVuStates},
     {"Deja Vu Amount", 0, 100, 0, kNT_unitPercent, 0, nullptr},
     {"Deja Vu Length", 1, 16, 1, kNT_unitNone, 0, nullptr},
-    {"X Range", 0, 2, 2, kNT_unitEnum, 0, kRanges},
+    {"X Range", 0, 2, 2, kNT_unitEnum, 0, kXYRanges},
     {"X Register", 0, 1, 0, kNT_unitEnum, 0, kOffOn},
     {"X Scale", 0, 5, 0, kNT_unitEnum, 0, kScaleNames},
-    {"Y Range", 0, 2, 2, kNT_unitEnum, 0, kRanges},
+    {"Y Range", 0, 2, 2, kNT_unitEnum, 0, kXYRanges},
     {"Y Divider", 0, 11, 6, kNT_unitNone, 0, nullptr},
     NT_PARAMETER_CV_INPUT("T Clock", 0, 1)
     NT_PARAMETER_CV_INPUT("X Clock", 0, 1)
@@ -365,8 +370,7 @@ int boundedIndex(int value, int maximum) {
   return value < 0 ? 0 : (value > maximum ? maximum : value);
 }
 
-void drawInteger(int x, int y, int value) {
-  char text[6];
+int formatInteger(char* text, int value) {
   char reversed[4];
   int count = 0;
   const bool negative = value < 0;
@@ -380,6 +384,27 @@ void drawInteger(int x, int y, int value) {
   if (negative) text[position++] = '-';
   while (count) text[position++] = reversed[--count];
   text[position] = '\0';
+  return position;
+}
+
+int formatTRatePercent(char* text, int value) {
+  const int bounded = value < -60 ? -60 : (value > 60 ? 60 : value);
+  // Round the internal -60..+60 coordinate onto the physical 0..100% knob.
+  const int percent = ((bounded + 60) * 100 + 60) / 120;
+  int position = formatInteger(text, percent);
+  text[position++] = '%';
+  text[position] = '\0';
+  return position;
+}
+
+int parameterString(_NT_algorithm* /*self*/, int parameter, int value,
+                    char* text) {
+  return parameter == kTRate ? formatTRatePercent(text, value) : 0;
+}
+
+void drawInteger(int x, int y, int value) {
+  char text[6];
+  formatInteger(text, value);
   NT_drawText(x, y, text);
 }
 
@@ -438,14 +463,16 @@ bool draw(_NT_algorithm* self) {
     NT_drawText(190, 13, kDejaVuStates[
         boundedIndex(self->v[kTDejaVu], 2)]);
     NT_drawText(5, 36, "Rate");
-    drawInteger(40, 36, self->v[kTRate]);
+    char rate[6];
+    formatTRatePercent(rate, self->v[kTRate]);
+    NT_drawText(40, 36, rate);
     NT_drawText(70, 36, "Bias");
     drawInteger(104, 36, self->v[kTBias]);
     NT_drawText(135, 36, "Jitter");
     drawInteger(181, 36, self->v[kTJitter]);
     NT_drawText(5, 55, "hold");
     NT_drawText(32, 55, "Range");
-    NT_drawText(72, 55, kRanges[boundedIndex(self->v[kTRange], 2)]);
+    NT_drawText(72, 55, kTRanges[boundedIndex(self->v[kTRange], 2)]);
     NT_drawText(108, 55, "Len");
     drawInteger(132, 55, self->v[kTGateLength]);
     NT_drawText(161, 55, "Rand");
@@ -454,6 +481,29 @@ bool draw(_NT_algorithm* self) {
   return true;
 }
 
-const _NT_factory kFactory = {.guid = kNtMarblesGuid, .name = "Marbles", .description = "Mutable Instruments Marbles port", .numSpecifications = 0, .specifications = nullptr, .calculateStaticRequirements = nullptr, .initialise = nullptr, .calculateRequirements = calculateRequirements, .construct = construct, .parameterChanged = nullptr, .step = step, .draw = draw, .midiRealtime = nullptr, .midiMessage = nullptr, .tags = kNT_tagUtility, .hasCustomUi = hasCustomUi, .customUi = customUi, .setupUi = setupUi, .serialise = nullptr, .deserialise = nullptr, .midiSysEx = nullptr, .parameterUiPrefix = nullptr, .parameterString = nullptr};
+const _NT_factory kFactory = {
+    .guid = kNtMarblesGuid,
+    .name = "Marbles",
+    .description = "Mutable Instruments Marbles port",
+    .numSpecifications = 0,
+    .specifications = nullptr,
+    .calculateStaticRequirements = nullptr,
+    .initialise = nullptr,
+    .calculateRequirements = calculateRequirements,
+    .construct = construct,
+    .parameterChanged = nullptr,
+    .step = step,
+    .draw = draw,
+    .midiRealtime = nullptr,
+    .midiMessage = nullptr,
+    .tags = kNT_tagUtility,
+    .hasCustomUi = hasCustomUi,
+    .customUi = customUi,
+    .setupUi = setupUi,
+    .serialise = nullptr,
+    .deserialise = nullptr,
+    .midiSysEx = nullptr,
+    .parameterUiPrefix = nullptr,
+    .parameterString = parameterString};
 }  // namespace
 extern "C" uintptr_t pluginEntry(_NT_selector selector, uint32_t data) { switch (selector) { case kNT_selector_version: return kNT_apiVersionCurrent; case kNT_selector_numFactories: return 1; case kNT_selector_factoryInfo: return reinterpret_cast<uintptr_t>(data == 0 ? &kFactory : nullptr); default: return 0; } }

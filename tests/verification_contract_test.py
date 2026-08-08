@@ -70,7 +70,7 @@ for criterion in range(1, 22):
 
 # Persisted musical defaults match Settings::Init at the pinned revision.
 for declaration in (
-    '{"T Rate", -60, 60, 0, kNT_unitSemitones',
+    '{"T Rate", -60, 60, 0, kNT_unitHasStrings',
     '{"X Steps", 0, 100, 75, kNT_unitPercent',
     '{"X Range", 0, 2, 2, kNT_unitEnum',
     '{"Y Steps", 0, 100, 0, kNT_unitPercent',

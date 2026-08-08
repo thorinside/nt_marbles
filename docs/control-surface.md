@@ -59,8 +59,12 @@ below are declared normal NT parameters and therefore are host-mappable.
 | `State::y_divider` | Y Divider |
 | `State::y_range` | Y Range |
 
-`T Rate` is the original calibrated −60…+60-semitone generator value, with 0
-at the center. The six `X Scale` choices load the exact pinned factory tables:
+`T Rate` is shown as the physical knob's normalized 0…100% position, with 50%
+at the center. Internally that position maps to the original exponential
+−60…+60 rate coordinate; it is not presented as semitones because it controls
+clock speed or external-clock division/multiplication, not pitch. `T Range`
+uses the original 1/4x, 1x, and 4x clock ranges. The six `X Scale` choices load
+the exact pinned factory tables:
 C major, C minor, Pentatonic, Pelog, Raag Bhairav That, and Raag Shri. Persisted
 defaults mirror upstream `Settings::Init`: X and Y Range are Full, Y Steps is
 0%, and Y Divider is 1/8. The upstream-only Markov enum is not exposed because
@@ -106,12 +110,13 @@ new-instance routes below leave physical outputs 1 and 2 unused.
 | Y Output | CV output | disconnected (0) | Marbles Y voltage channel → independently selectable NT CV signal. |
 
 The primary and held controls in the preceding tables are adjustable
-host-mappable parameters. `step()` maps T Rate to the original semitone value
-and maps remaining percentages and named states to the corresponding original
-`TGenerator` and `XYGenerator` setters and `GroupSettings`. T1/T3 are
-deinterleaved from the two-channel gate frames; X1/X2/X3/Y are deinterleaved
-from the four-channel voltage frames. No route is stored by plug-in
-serialization (`serialise` and `deserialise` are null).
+host-mappable parameters. `step()` maps the displayed T Rate knob position to
+the original exponential rate coordinate and maps remaining percentages and
+named states to the corresponding original `TGenerator` and `XYGenerator`
+setters and `GroupSettings`. T1/T3 are deinterleaved from the two-channel gate
+frames; X1/X2/X3/Y are deinterleaved from the four-channel voltage frames. No
+route is stored by plug-in serialization (`serialise` and `deserialise` are
+null).
 
 ## Host-native preset restoration
 

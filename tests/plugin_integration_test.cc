@@ -156,7 +156,25 @@ void TestFactoryAndTRate() {
   assert(fixture.algorithm->parameters[rate].min == -60);
   assert(fixture.algorithm->parameters[rate].max == 60);
   assert(fixture.algorithm->parameters[rate].def == 0);
+  assert(fixture.algorithm->parameters[rate].unit == kNT_unitHasStrings);
+  assert(fixture.factory->parameterString != nullptr);
+  char display[kNT_parameterStringSize] = {};
+  assert(fixture.factory->parameterString(
+      fixture.algorithm, rate, -60, display) == 2);
+  assert(std::strcmp(display, "0%") == 0);
+  assert(fixture.factory->parameterString(
+      fixture.algorithm, rate, 0, display) == 3);
+  assert(std::strcmp(display, "50%") == 0);
+  assert(fixture.factory->parameterString(
+      fixture.algorithm, rate, 60, display) == 4);
+  assert(std::strcmp(display, "100%") == 0);
   assert(fixture.algorithm->parameters[model].max == 5);
+
+  const _NT_parameter& tRange =
+      fixture.algorithm->parameters[fixture.parameter("T Range")];
+  assert(std::strcmp(tRange.enumStrings[0], "1/4x") == 0);
+  assert(std::strcmp(tRange.enumStrings[1], "1x") == 0);
+  assert(std::strcmp(tRange.enumStrings[2], "4x") == 0);
 
   _NT_uiData ui = {};
   ui.controls = kNT_potL;
@@ -396,7 +414,7 @@ void TestControlSurface() {
   assert(TextDrawn("Rate"));
   assert(TextDrawn("Jitter"));
   assert(TextDrawn("Range"));
-  assert(TextDrawnAt(40, 36, "0"));
+  assert(TextDrawnAt(40, 36, "50%"));
   assert(TextDrawnAt(104, 36, "50"));
   assert(TextDrawnAt(181, 36, "0"));
   assert(ShapeDrawn(kNT_box, 0, 0, 255, 63, 8));
@@ -419,7 +437,7 @@ void TestControlSurface() {
   assert(fixture.values[fixture.parameter("T Jitter")] == 72);
   ClearDrawCalls();
   assert(fixture.factory->draw(fixture.algorithm));
-  assert(TextDrawnAt(40, 36, "-30"));
+  assert(TextDrawnAt(40, 36, "25%"));
   assert(TextDrawnAt(104, 36, "61"));
   assert(TextDrawnAt(181, 36, "72"));
 
@@ -440,7 +458,7 @@ void TestControlSurface() {
   assert(fixture.values[fixture.parameter("T Gate Randomness")] == 45);
   ClearDrawCalls();
   assert(fixture.factory->draw(fixture.algorithm));
-  assert(TextDrawnAt(72, 55, "Full"));
+  assert(TextDrawnAt(72, 55, "4x"));
   assert(TextDrawnAt(132, 55, "34"));
   assert(TextDrawnAt(194, 55, "45"));
 

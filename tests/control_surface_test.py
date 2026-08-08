@@ -17,7 +17,9 @@ assert 'algorithm->help = data.controls & kNT_button3;' in source
 assert 'held[pot] ? tSecondary[pot] : tPrimary[pot]' in source
 assert 'held[pot] ? xSecondary[pot] : xPrimary[pot]' in source
 assert '"Off", "Amount", "Super-lock"' in source
-assert '{"T Rate", -60, 60, 0, kNT_unitSemitones' in source
+assert '{"T Rate", -60, 60, 0, kNT_unitHasStrings' in source
+assert 'const char* const kTRanges[] = {"1/4x", "1x", "4x"};' in source
+assert '.parameterString = parameterString' in source
 assert '{"T Model", 0, 5, 0, kNT_unitEnum' in source
 assert '{"X Steps", 0, 100, 75, kNT_unitPercent' in source
 assert 'const int maximum = algorithm->xWorkspace ? 2 : 5;' in source

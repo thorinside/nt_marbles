@@ -7,14 +7,17 @@ test, supplemental contract checks, ARM inspection, and repository evidence.
 The exact tested commit and object checksum are generated into the release
 bundle by `make package`.
 
-Hardware validation has produced two negative observations: the original object
+Hardware validation has produced three negative observations: the original object
 had a sparse, apparently inactive interface, and the first recovery candidate
 did not respond to real encoder events while its unquantized X Steps midpoint
-made factory-scale behavior difficult to hear. The second finding reopened the
-X/Y, control-surface, and packaging tickets. The encoder event contract, live
-numeric display, visible active scale, and quantized new-instance X Steps value
-now have executable regression coverage. The owner fields below remain pending
-until the rebuilt object passes one final validation session.
+made factory-scale behavior difficult to hear. The next pass exposed that T
+Rate's internal exponential coordinate was incorrectly labelled as semitones
+and that T Range reused the unrelated X/Y voltage-range labels. These findings
+reopened their automated slices. The encoder event contract, live numeric
+display, visible active scale, quantized new-instance X Steps value, normalized
+T Rate presentation, and distinct clock-range labels now have executable
+regression coverage. The owner fields below remain pending until the rebuilt
+object passes one final validation session.
 
 | Criterion | Current disposition | Durable evidence | Final owner observation |
 | --- | --- | --- | --- |
