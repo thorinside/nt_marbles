@@ -63,6 +63,27 @@ inspect: $(TARGET)
 	$(ARM_NM) -g $(TARGET) | grep -E 'pluginEntry$$'
 	! $(ARM_NM) -u $(TARGET) | grep -E '__aeabi_'
 
+# Native host build for nt_emu / VCV Rack (not part of the hardware build)
+HOST_OS := $(shell uname -s)
+ifeq ($(HOST_OS),Darwin)
+	HOST_DYLIB_EXT := dylib
+	HOST_DYLIB_LDFLAGS := -dynamiclib -undefined dynamic_lookup
+else
+	HOST_DYLIB_EXT := so
+	HOST_DYLIB_LDFLAGS := -shared
+endif
+HOST_DYLIB := plugins/nt_marbles.$(HOST_DYLIB_EXT)
+HOST_DYLIB_FLAGS := -std=c++11 -O2 -fPIC -Wall -Wextra -Wno-unused-parameter \
+                    -fno-rtti -fno-exceptions
+
+dylib: $(HOST_DYLIB)
+
+$(HOST_DYLIB): $(HOST_SOURCES) $(MARBLES_SOURCES) $(OVERLAY)/.prepared
+	@mkdir -p $(@D)
+	$(NATIVE_CXX) $(HOST_DYLIB_FLAGS) $(INCLUDES) -Isrc $(HOST_DYLIB_LDFLAGS) \
+		-o $@ $(HOST_SOURCES) $(MARBLES_SOURCES)
+	@echo "Built host plugin: $@"
+
 package: inspect
 	@mkdir -p release/programs/plug-ins release/licenses
 	cp $(TARGET) release/programs/plug-ins/
@@ -118,4 +139,4 @@ test: $(HOST_TEST) $(PLUGIN_TEST) engine-matrix
 clean:
 	rm -rf $(BUILD) plugins release $(PACKAGE) $(PACKAGE).sha256
 
-.PHONY: all clean engine-matrix inspect package verify-overlay test
+.PHONY: all clean dylib engine-matrix inspect package verify-overlay test
